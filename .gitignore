@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+packages/*/node_modules/
+
+# Production / Build outputs
+dist/
+packages/*/dist/
+
+# Environment configurations and keys (credentials)
+.env
+packages/*/.env
+*.pem
+*.key
+*.key.pub
+
+# Local configuration / OS files
+.DS_Store
+Thumbs.db
+*.log

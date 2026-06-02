@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cPanel Clone — Complete Technical Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+:root {
+  --bg:      #09100f;
+  --bg2:     #0e1a18;
+  --bg3:     #152320;
+  --bg4:     #1c2e2b;
+  --border:  rgba(80,200,160,0.10);
+  --border2: rgba(80,200,160,0.18);
+  --text:    #d4ede8;
+  --text2:   #7faba3;
+  --text3:   #456560;
+  --accent:  #3ecf9c;
+  --accent2: #23967a;
+  --gold:    #c8a557;
+  --gold-bg: rgba(200,165,87,0.10);
+  --blue:    #4a9eca;
+  --blue-bg: rgba(74,158,202,0.10);
+  --red:     #c05a6a;
+  --red-bg:  rgba(192,90,106,0.10);
+  --amber:   #c89040;
+  --amber-bg:rgba(200,144,64,0.10);
+  --purple:  #9b7ecc;
+  --purple-bg:rgba(155,126,204,0.10);
+  --green:   #4ab87a;
+  --green-bg:rgba(74,184,122,0.10);
+  --mono: 'IBM Plex Mono', monospace;
+  --serif: 'DM Serif Display', serif;
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --r: 8px;
+  --rl: 14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.75}
+
+/* ── Layout ── */
+.wrap{display:grid;grid-template-columns:270px 1fr;min-height:100vh}
+
+/* ── Sidebar ── */
+.nav{
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  padding:1.75rem 0;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:var(--bg4) transparent;
+}
+.nav-brand{padding:0 1.25rem 1.25rem;border-bottom:1px solid var(--border);margin-bottom:0.75rem}
+.nav-brand-title{font-family:var(--serif);font-size:17px;color:var(--accent);line-height:1.2}
+.nav-brand-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;letter-spacing:.06em}
+.nav-group-label{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding:.9rem 1.25rem .25rem}
+.nav a{
+  display:block;padding:5px 1.25rem;font-size:12.5px;color:var(--text2);text-decoration:none;
+  border-left:2px solid transparent;transition:all .12s;line-height:1.4;
+}
+.nav a:hover,.nav a.active{color:var(--accent);border-left-color:var(--accent);background:rgba(62,207,156,.05)}
+
+/* ── Main ── */
+.main{padding:3rem 4rem;max-width:980px}
+
+/* ── Hero ── */
+.hero{
+  background:linear-gradient(135deg,rgba(62,207,156,.07),rgba(74,158,202,.04));
+  border:1px solid rgba(62,207,156,.18);
+  border-radius:var(--rl);padding:2.25rem 2.75rem;margin-bottom:3.5rem;
+}
+.hero h1{font-family:var(--serif);font-size:42px;font-weight:400;letter-spacing:-.03em;line-height:1.15;color:var(--text)}
+.hero-sub{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.07em;margin-top:.35rem}
+.tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:1.25rem}
+.tag{font-family:var(--mono);font-size:10.5px;padding:3px 9px;border-radius:4px;border:1px solid}
+.t-node{color:var(--green);border-color:rgba(74,184,122,.3);background:var(--green-bg)}
+.t-ts  {color:var(--blue); border-color:rgba(74,158,202,.3);background:var(--blue-bg)}
+.t-pg  {color:var(--purple);border-color:rgba(155,126,204,.3);background:var(--purple-bg)}
+.t-react{color:var(--accent);border-color:rgba(62,207,156,.25);background:rgba(62,207,156,.07)}
+.t-docker{color:var(--gold);border-color:rgba(200,165,87,.25);background:var(--gold-bg)}
+.t-redis{color:var(--red);border-color:rgba(192,90,106,.25);background:var(--red-bg)}
+
+/* ── Section ── */
+.section{scroll-margin-top:2rem;padding-top:3.5rem}
+.sec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:1.75rem}
+.sec-num{font-family:var(--mono);font-size:10px;color:var(--accent);background:rgba(62,207,156,.1);border:1px solid rgba(62,207,156,.2);padding:3px 9px;border-radius:4px;white-space:nowrap}
+h2{font-family:var(--serif);font-size:28px;font-weight:400;color:var(--text);letter-spacing:-.02em}
+h3{font-family:var(--serif);font-size:19px;font-weight:400;color:var(--text);margin:2.25rem 0 .75rem;letter-spacing:-.01em}
+h4{font-family:var(--mono);font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;margin:1.75rem 0 .6rem}
+p{color:var(--text2);margin-bottom:1rem;line-height:1.8}
+p:last-child{margin-bottom:0}
+hr.div{border:none;border-top:1px solid var(--border);margin:3rem 0}
+
+/* ── Callouts ── */
+.call{border-radius:var(--r);padding:1rem 1.25rem;margin:1.25rem 0;border-left:3px solid}
+.call p{font-size:13.5px;margin:0}
+.call-lbl{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.35rem;display:block}
+.call.info{background:var(--blue-bg);border-color:var(--blue)} .call.info .call-lbl{color:var(--blue)}
+.call.warn{background:var(--amber-bg);border-color:var(--amber)} .call.warn .call-lbl{color:var(--amber)}
+.call.danger{background:var(--red-bg);border-color:var(--red)} .call.danger .call-lbl{color:var(--red)}
+.call.success{background:var(--green-bg);border-color:var(--green)} .call.success .call-lbl{color:var(--green)}
+.call.tip{background:rgba(62,207,156,.07);border-color:var(--accent)} .call.tip .call-lbl{color:var(--accent)}
+
+/* ── Code ── */
+pre{background:#04100e;border:1px solid var(--border2);border-radius:var(--r);padding:1.25rem 1.5rem;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.7;color:#a8d8c8;margin:1rem 0}
+code{font-family:var(--mono);font-size:12px}
+p code,li code,td code{background:rgba(62,207,156,.08);border:1px solid rgba(62,207,156,.15);border-radius:3px;padding:1px 5px;font-size:11.5px;color:var(--accent)}
+
+/* ── Tables ── */
+.tw{overflow-x:auto;margin:1rem 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:9px 13px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);border-bottom:1px solid var(--border2)}
+td{padding:9px 13px;color:var(--text2);border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5}
+tr:last-child td{border-bottom:none}
+td strong{color:var(--text);font-weight:500}
+.td-m{font-family:var(--mono);font-size:11.5px;color:var(--text)}
+
+/* ── Grids ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:1.25rem 0}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:1.25rem 0}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem 1.25rem}
+.card h5{font-size:13px;font-weight:500;color:var(--text);margin-bottom:.35rem}
+.card p{font-size:13px;margin:0;color:var(--text2)}
+.card.accent-l{border-left:2px solid var(--accent)}
+.card.gold-l{border-left:2px solid var(--gold)}
+.card.red-l{border-left:2px solid var(--red)}
+.card.blue-l{border-left:2px solid var(--blue)}
+.card.purple-l{border-left:2px solid var(--purple)}
+
+/* ── Steps ── */
+.steps{margin:1.25rem 0}
+.step{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+.step:last-child{border-bottom:none}
+.sn{width:26px;height:26px;border-radius:50%;background:rgba(62,207,156,.12);border:1px solid rgba(62,207,156,.25);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:var(--accent);flex-shrink:0;margin-top:3px}
+.sc h5{font-size:14px;font-weight:500;color:var(--text);margin-bottom:3px}
+.sc p{font-size:13px;margin:0}
+
+/* ── Module badges ── */
+.mod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin:1.25rem 0}
+.mod{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+  padding:.9rem 1.1rem;display:flex;align-items:flex-start;gap:10px;
+}
+.mod-icon{font-size:18px;margin-top:1px;flex-shrink:0}
+.mod-name{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px}
+.mod-desc{font-size:11.5px;color:var(--text3)}
+
+/* ── Status / privilege badges ── */
+.badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10.5px;padding:2px 8px;border-radius:10px;font-weight:500}
+.badge.ok  {background:var(--green-bg);color:var(--green)}
+.badge.warn{background:var(--amber-bg);color:var(--amber)}
+.badge.err {background:var(--red-bg);  color:var(--red)}
+.badge.info{background:var(--blue-bg); color:var(--blue)}
+.badge.purple{background:var(--purple-bg);color:var(--purple)}
+
+/* ── Endpoint list ── */
+.ep{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:9px 13px;margin:5px 0;font-family:var(--mono);font-size:12px}
+.m{font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px;min-width:44px;text-align:center}
+.m.get  {background:var(--blue-bg);  color:var(--blue);  border:1px solid rgba(74,158,202,.3)}
+.m.post {background:var(--green-bg); color:var(--green); border:1px solid rgba(74,184,122,.3)}
+.m.put  {background:var(--amber-bg); color:var(--amber); border:1px solid rgba(200,144,64,.3)}
+.m.patch{background:var(--purple-bg);color:var(--purple);border:1px solid rgba(155,126,204,.3)}
+.m.del  {background:var(--red-bg);   color:var(--red);   border:1px solid rgba(192,90,106,.3)}
+.ep-path{color:var(--text)}
+.ep-note{color:var(--text3);font-size:10.5px;margin-left:auto;font-family:var(--sans)}
+
+/* ── Architecture diagram box ── */
+.dia{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:1.5rem;margin:1.25rem 0;overflow-x:auto}
+
+/* ── Phase timeline ── */
+.phase{display:flex;gap:0;margin:1.5rem 0;flex-wrap:wrap}
+.ph{
+  flex:1;min-width:120px;background:var(--bg2);border:1px solid var(--border);
+  padding:1rem 1.1rem;position:relative;
+}
+.ph:not(:last-child)::after{
+  content:'›';position:absolute;right:-12px;top:50%;transform:translateY(-50%);
+  color:var(--text3);font-size:18px;z-index:1;
+}
+.ph:first-child{border-radius:var(--r) 0 0 var(--r)}
+.ph:last-child{border-radius:0 var(--r) var(--r) 0}
+.ph-label{font-family:var(--mono);font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.35rem}
+.ph-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:.25rem}
+.ph-days{font-family:var(--mono);font-size:10.5px;color:var(--text3)}
+
+/* ── Layer diagram ── */
+.layers{display:flex;flex-direction:column;gap:3px;margin:1.25rem 0}
+.layer{
+  display:flex;align-items:center;gap:16px;background:var(--bg2);
+  border:1px solid var(--border);border-radius:var(--r);padding:.75rem 1.25rem;
+}
+.layer-name{font-family:var(--mono);font-size:11px;color:var(--accent);min-width:130px;flex-shrink:0}
+.layer-items{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--mono);font-size:10.5px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;color:var(--text2)}
+
+/* ── Privilege matrix ── */
+.pm-wrap{overflow-x:auto;margin:1rem 0}
+.pm-table{width:100%;border-collapse:collapse;font-size:12px}
+.pm-table th{background:var(--bg2);padding:8px 12px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);border:1px solid var(--border);text-align:center}
+.pm-table th:first-child{text-align:left}
+.pm-table td{padding:7px 12px;border:1px solid var(--border);color:var(--text2);text-align:center}
+.pm-table td:first-child{text-align:left;font-weight:500;color:var(--text);font-size:12.5px}
+.pm-table tr:nth-child(even) td{background:rgba(62,207,156,.025)}
+.ck{color:var(--green);font-size:14px}
+.xx{color:var(--red);font-size:12px}
+.pt{color:var(--amber);font-size:12px}
+
+/* ── Responsive ── */
+@media(max-width:860px){
+  .wrap{grid-template-columns:1fr}
+  .nav{display:none}
+  .main{padding:2rem 1.5rem}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .phase{flex-direction:column}
+  .ph::after{display:none}
+  .ph{border-radius:var(--r)!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-brand-title">cPanel Clone Blueprint</div>
+    <div class="nav-brand-sub">COMPLETE TECHNICAL GUIDE</div>
+  </div>
+  <div class="nav-group-label">Foundation</div>
+  <a href="#s1">1 — What Is cPanel?</a>
+  <a href="#s2">2 — System Architecture</a>
+  <a href="#s3">3 — Module Breakdown</a>
+  <a href="#s4">4 — User Roles & Hierarchy</a>
+  <div class="nav-group-label">Core Modules</div>
+  <a href="#s5">5 — DNS Management</a>
+  <a href="#s6">6 — Email System</a>
+  <a href="#s7">7 — File Manager</a>
+  <a href="#s8">8 — Database Management</a>
+  <a href="#s9">9 — FTP Accounts</a>
+  <a href="#s10">10 — SSL / TLS</a>
+  <div class="nav-group-label">Infrastructure</div>
+  <a href="#s11">11 — Domain & Subdomain Logic</a>
+  <a href="#s12">12 — Resource Quotas</a>
+  <a href="#s13">13 — Backup System</a>
+  <a href="#s14">14 — Software Installer</a>
+  <div class="nav-group-label">Platform</div>
+  <a href="#s15">15 — Database Design</a>
+  <a href="#s16">16 — API Design</a>
+  <a href="#s17">17 — Security Layer</a>
+  <a href="#s18">18 — WHM (Reseller Layer)</a>
+  <div class="nav-group-label">Build</div>
+  <a href="#s19">19 — Tech Stack</a>
+  <a href="#s20">20 — Implementation Roadmap</a>
+  <a href="#s21">21 — WHMCS Integration</a>
+</nav>
+
+<!-- ════════════ MAIN ════════════ -->
+<main class="main">
+
+<div class="hero">
+  <h1>cPanel Clone<br><em>Complete Technical Blueprint</em></h1>
+  <div class="hero-sub">FROM ARCHITECTURE TO PRODUCTION — NODE.JS · TYPESCRIPT · MYSQL · REACT</div>
+  <div class="tag-row">
+    <span class="tag t-node">Node.js</span>
+    <span class="tag t-ts">TypeScript</span>
+    <span class="tag t-pg">MySQL</span>
+    <span class="tag t-react">React</span>
+    <span class="tag t-docker">Docker</span>
+    <span class="tag t-redis">Redis</span>
+  </div>
+</div>
+
+<!-- ─────────────────────── S1 ─────────────────────── -->
+<section class="section" id="s1">
+  <div class="sec-hdr"><span class="sec-num">§ 01</span><h2>What Is cPanel?</h2></div>
+
+  <p>cPanel is a Linux-based web hosting control panel that provides a graphical interface for managing all aspects of a web hosting account. It sits between the raw Linux server and the end user, wrapping complex system administration tasks into a web UI that non-technical clients can operate.</p>
+
+  <div class="grid2">
+    <div class="card accent-l">
+      <h5>What cPanel manages on the server</h5>
+      <p>DNS zones, Apache/Nginx vhosts, email accounts (Dovecot/Exim), MySQL databases, FTP accounts (Pure-FTPd), filesystem quotas, SSL certificates, cron jobs, PHP version per-domain, and application installers (Softaculous).</p>
+    </div>
+    <div class="card blue-l">
+      <h5>The three-tier hierarchy</h5>
+      <p><strong>WHM</strong> (root/reseller admin) → <strong>cPanel</strong> (hosting account holder) → <strong>Webmail/phpMyAdmin</strong> (end-user subapps). Each tier has its own port, auth, and permission scope.</p>
+    </div>
+  </div>
+
+  <h3>What Your Clone Must Replicate</h3>
+  <div class="grid3">
+    <div class="card"><h5>Server orchestration</h5><p>Your backend talks to real server daemons — Nginx, Postfix, Dovecot, ProFTPd, BIND/PowerDNS, MySQL. It does not simulate them.</p></div>
+    <div class="card"><h5>Provisioning engine</h5><p>When WHMCS creates an account, your system must provision all server-side resources automatically and atomically.</p></div>
+    <div class="card"><h5>Resource isolation</h5><p>Each hosting account must be a separate Linux user with filesystem, disk quota, bandwidth, and process limits enforced at the OS level.</p></div>
+    <div class="card"><h5>Web UI (cPanel equivalent)</h5><p>A React dashboard the client logs into to manage domains, email, databases, files — their slice of the server.</p></div>
+    <div class="card"><h5>WHM equivalent</h5><p>An admin/reseller dashboard for creating accounts, setting resource limits, managing shared server config, and billing integration.</p></div>
+    <div class="card"><h5>API surface</h5><p>WHMCS and other billing systems talk to cPanel via its API. Your clone needs a compatible or equivalent REST API for WHMCS integration.</p></div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S2 ─────────────────────── -->
+<section class="section" id="s2">
+  <div class="sec-hdr"><span class="sec-num">§ 02</span><h2>System Architecture</h2></div>
+
+  <p>The clone has four layers: a React frontend, a Node.js API gateway, a set of service modules that each own one server subsystem, and the underlying Linux daemons. A message queue handles long-running provisioning tasks asynchronously.</p>
+
+  <div class="layers">
+    <div class="layer">
+      <div class="layer-name">Client Layer</div>
+      <div class="layer-items">
+        <span class="chip">React (Vite)</span>
+        <span class="chip">cPanel UI (port 2083)</span>
+        <span class="chip">WHM UI (port 2087)</span>
+        <span class="chip">Webmail UI (port 2096)</span>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-name">API Gateway</div>
+      <div class="layer-items">
+        <span class="chip">Fastify / Express</span>
+        <span class="chip">JWT auth</span>
+        <span class="chip">Rate limiter</span>
+        <span class="chip">RBAC middleware</span>
+        <span class="chip">Request validation (Zod)</span>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-name">Service Layer</div>
+      <div class="layer-items">
+        <span class="chip">AccountService</span>
+        <span class="chip">DnsService</span>
+        <span class="chip">EmailService</span>
+        <span class="chip">DatabaseService</span>
+        <span class="chip">FileService</span>
+        <span class="chip">FtpService</span>
+        <span class="chip">SslService</span>
+        <span class="chip">BackupService</span>
+        <span class="chip">QuotaService</span>
+        <span class="chip">CronService</span>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-name">Job Queue</div>
+      <div class="layer-items">
+        <span class="chip">BullMQ</span>
+        <span class="chip">Redis</span>
+        <span class="chip">Account provisioning jobs</span>
+        <span class="chip">Backup jobs</span>
+        <span class="chip">SSL renewal jobs</span>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-name">Data Layer</div>
+      <div class="layer-items">
+        <span class="chip">MySQL 8</span>
+        <span class="chip">Redis (cache + sessions)</span>
+        <span class="chip">Filesystem (/home/{username})</span>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-name">System Daemons</div>
+      <div class="layer-items">
+        <span class="chip">Nginx (web server)</span>
+        <span class="chip">PHP-FPM (multi-version)</span>
+        <span class="chip">PowerDNS (DNS)</span>
+        <span class="chip">Postfix (SMTP)</span>
+        <span class="chip">Dovecot (IMAP/POP3)</span>
+        <span class="chip">ProFTPd (FTP)</span>
+        <span class="chip">MySQL 8 (databases)</span>
+        <span class="chip">Let's Encrypt (SSL)</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Provisioning Flow (Account Creation)</h3>
+  <div class="dia">
+    <div class="mermaid">
+sequenceDiagram
+    participant WHMCS as WHMCS/Admin
+    participant API as API Gateway
+    participant Queue as BullMQ Queue
+    participant Worker as Provision Worker
+    participant OS as Linux OS
+    participant DB as MySQL
+
+    WHMCS->>API: POST /api/accounts {username, domain, plan}
+    API->>DB: Insert account record (status=provisioning)
+    API->>Queue: Enqueue provision job
+    API-->>WHMCS: 202 Accepted {jobId}
+
+    Queue->>Worker: Dequeue job
+    Worker->>OS: useradd {username} + set password
+    Worker->>OS: mkdir /home/{username}, chown, quota set
+    Worker->>OS: Write Nginx vhost config
+    Worker->>OS: nginx -s reload
+    Worker->>OS: Create DNS zone in PowerDNS
+    Worker->>OS: Create Postfix mailbox routing
+    Worker->>OS: Create ProFTPd virtual user
+    Worker->>OS: Create MySQL user + grant privileges
+    Worker->>DB: Update account status=active
+    Worker->>WHMCS: Webhook: account.provisioned
+    </div>
+  </div>
+
+  <div class="call warn">
+    <span class="call-lbl">Critical Design Rule</span>
+    <p>Account provisioning must be <strong>idempotent</strong>. If the worker crashes mid-provisioning, re-running the job must not create duplicate users, duplicate DNS zones, or partial states. Each provisioning step must check if it's already been applied before executing.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S3 ─────────────────────── -->
+<section class="section" id="s3">
+  <div class="sec-hdr"><span class="sec-num">§ 03</span><h2>Module Breakdown</h2></div>
+
+  <p>cPanel has approximately 60 modules. A production-viable clone needs the core 15. Below are all modules, grouped by priority.</p>
+
+  <h4>Priority 1 — Must Have (MVP)</h4>
+  <div class="mod-grid">
+    <div class="mod"><div class="mod-icon">🌐</div><div><div class="mod-name">Domains</div><div class="mod-desc">Addon, parked, redirects</div></div></div>
+    <div class="mod"><div class="mod-icon">🔤</div><div><div class="mod-name">Subdomains</div><div class="mod-desc">Create, delete, redirect</div></div></div>
+    <div class="mod"><div class="mod-icon">📧</div><div><div class="mod-name">Email Accounts</div><div class="mod-desc">Create, quota, password</div></div></div>
+    <div class="mod"><div class="mod-icon">📬</div><div><div class="mod-name">Email Forwarders</div><div class="mod-desc">Address &amp; domain forwarders</div></div></div>
+    <div class="mod"><div class="mod-icon">🗄️</div><div><div class="mod-name">MySQL Databases</div><div class="mod-desc">Create DB + user + assign</div></div></div>
+    <div class="mod"><div class="mod-icon">🛡️</div><div><div class="mod-name">SSL/TLS</div><div class="mod-desc">Let's Encrypt auto-issue</div></div></div>
+    <div class="mod"><div class="mod-icon">📁</div><div><div class="mod-name">File Manager</div><div class="mod-desc">Browse, upload, edit, chmod</div></div></div>
+    <div class="mod"><div class="mod-icon">📡</div><div><div class="mod-name">FTP Accounts</div><div class="mod-desc">Accounts + directory scope</div></div></div>
+    <div class="mod"><div class="mod-icon">🕐</div><div><div class="mod-name">Cron Jobs</div><div class="mod-desc">Add/edit system crontab entries</div></div></div>
+    <div class="mod"><div class="mod-icon">🌍</div><div><div class="mod-name">DNS Zone Editor</div><div class="mod-desc">A, CNAME, MX, TXT records</div></div></div>
+  </div>
+
+  <h4>Priority 2 — Should Have</h4>
+  <div class="mod-grid">
+    <div class="mod"><div class="mod-icon">🔒</div><div><div class="mod-name">Directory Privacy</div><div class="mod-desc">HTTP Basic Auth on paths</div></div></div>
+    <div class="mod"><div class="mod-icon">📊</div><div><div class="mod-name">Bandwidth / Stats</div><div class="mod-desc">Awstats / Nginx log parser</div></div></div>
+    <div class="mod"><div class="mod-icon">🛑</div><div><div class="mod-name">IP Blocker</div><div class="mod-desc">Deny IPs via Nginx deny</div></div></div>
+    <div class="mod"><div class="mod-icon">🔄</div><div><div class="mod-name">Redirects</div><div class="mod-desc">301/302 per-domain rules</div></div></div>
+    <div class="mod"><div class="mod-icon">💾</div><div><div class="mod-name">Backups</div><div class="mod-desc">Home dir + DB backup + restore</div></div></div>
+    <div class="mod"><div class="mod-icon">🐘</div><div><div class="mod-name">PHP Version Selector</div><div class="mod-desc">Per-domain PHP-FPM pool</div></div></div>
+    <div class="mod"><div class="mod-icon">📮</div><div><div class="mod-name">Email Spam Filter</div><div class="mod-desc">SpamAssassin rules per account</div></div></div>
+    <div class="mod"><div class="mod-icon">📑</div><div><div class="mod-name">Error Pages</div><div class="mod-desc">Custom 404/500 per domain</div></div></div>
+  </div>
+
+  <h4>Priority 3 — Nice to Have</h4>
+  <div class="mod-grid">
+    <div class="mod"><div class="mod-icon">🚀</div><div><div class="mod-name">App Installer</div><div class="mod-desc">WordPress one-click deploy</div></div></div>
+    <div class="mod"><div class="mod-icon">🔑</div><div><div class="mod-name">SSH Key Manager</div><div class="mod-desc">Authorized_keys management</div></div></div>
+    <div class="mod"><div class="mod-icon">📬</div><div><div class="mod-name">Webmail</div><div class="mod-desc">Roundcube embed</div></div></div>
+    <div class="mod"><div class="mod-icon">🗂️</div><div><div class="mod-name">Disk Usage Viewer</div><div class="mod-desc">du -sh tree visualization</div></div></div>
+    <div class="mod"><div class="mod-icon">🔐</div><div><div class="mod-name">Hotlink Protection</div><div class="mod-desc">Nginx referer rules</div></div></div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S4 ─────────────────────── -->
+<section class="section" id="s4">
+  <div class="sec-hdr"><span class="sec-num">§ 04</span><h2>User Roles & Hierarchy</h2></div>
+
+  <div class="grid2">
+    <div class="card">
+      <h5>Root / Server Admin</h5>
+      <p>Full access. Can create resellers, set server-wide config, view all accounts, access WHM. Maps to WHM root login.</p>
+    </div>
+    <div class="card">
+      <h5>Reseller</h5>
+      <p>Can create and manage their own pool of hosting accounts up to their allocated resource limits. Cannot touch other resellers' accounts.</p>
+    </div>
+    <div class="card">
+      <h5>Account Owner (cPanel user)</h5>
+      <p>Can manage only their own hosting account: domains, email, databases, files. Cannot exceed their plan quota.</p>
+    </div>
+    <div class="card">
+      <h5>Sub-account (DAV/FTP user)</h5>
+      <p>Limited to a specific directory or service. Cannot login to cPanel UI. Created by the account owner.</p>
+    </div>
+  </div>
+
+  <h3>Permission Matrix</h3>
+  <div class="pm-wrap">
+    <table class="pm-table">
+      <thead>
+        <tr>
+          <th>Action</th>
+          <th>Root</th>
+          <th>Reseller</th>
+          <th>Account Owner</th>
+          <th>Sub-account</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Create hosting account</td><td class="ck">✓</td><td class="ck">✓ (within quota)</td><td class="xx">✗</td><td class="xx">✗</td></tr>
+        <tr><td>Suspend / terminate account</td><td class="ck">✓</td><td class="ck">✓ (own accounts)</td><td class="xx">✗</td><td class="xx">✗</td></tr>
+        <tr><td>Manage DNS zone</td><td class="ck">✓</td><td class="ck">✓</td><td class="ck">✓</td><td class="xx">✗</td></tr>
+        <tr><td>Create email accounts</td><td class="ck">✓</td><td class="ck">✓</td><td class="ck">✓</td><td class="xx">✗</td></tr>
+        <tr><td>Create MySQL databases</td><td class="ck">✓</td><td class="ck">✓</td><td class="ck">✓</td><td class="xx">✗</td></tr>
+        <tr><td>Access file manager</td><td class="ck">✓</td><td class="ck">✓</td><td class="ck">✓ (own home)</td><td class="pt">✓ (scoped dir)</td></tr>
+        <tr><td>Install SSL certificate</td><td class="ck">✓</td><td class="ck">✓</td><td class="ck">✓</td><td class="xx">✗</td></tr>
+        <tr><td>Modify PHP version</td><td class="ck">✓</td><td class="ck">✓</td><td class="ck">✓</td><td class="xx">✗</td></tr>
+        <tr><td>View server-wide stats</td><td class="ck">✓</td><td class="xx">✗</td><td class="xx">✗</td><td class="xx">✗</td></tr>
+        <tr><td>Set reseller resource limits</td><td class="ck">✓</td><td class="xx">✗</td><td class="xx">✗</td><td class="xx">✗</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S5 ─────────────────────── -->
+<section class="section" id="s5">
+  <div class="sec-hdr"><span class="sec-num">§ 05</span><h2>DNS Management</h2></div>
+
+  <p>DNS is managed via <strong>PowerDNS</strong> with its MySQL backend. Your service reads and writes DNS records directly into the PowerDNS database, then signals PowerDNS to reload. Never parse zone files manually — PowerDNS API handles all record types cleanly.</p>
+
+  <h3>PowerDNS MySQL Schema (relevant tables)</h3>
+  <pre><code class="sql">-- PowerDNS uses these tables (you write to them)
+domains (id, name, master, last_check, type, notified_serial, account)
+records (id, domain_id, name, type, content, ttl, prio, disabled, auth)
+
+-- Example: creating a zone for example.com
+INSERT INTO domains (name, type) VALUES ('example.com', 'NATIVE');
+-- SOA record (mandatory)
+INSERT INTO records (domain_id, name, type, content, ttl) VALUES
+  (LAST_INSERT_ID(), 'example.com', 'SOA',
+   'ns1.yourserver.com. admin.example.com. 2025060101 3600 900 604800 300', 3600);
+-- NS records
+INSERT INTO records (domain_id, name, type, content, ttl) VALUES
+  (LAST_INSERT_ID(), 'example.com', 'NS', 'ns1.yourserver.com.', 3600),
+  (LAST_INSERT_ID(), 'example.com', 'NS', 'ns2.yourserver.com.', 3600);
+-- Default A record pointing to server IP
+INSERT INTO records (domain_id, name, type, content, ttl) VALUES
+  (LAST_INSERT_ID(), 'example.com',     'A', '203.0.113.5', 3600),
+  (LAST_INSERT_ID(), 'www.example.com', 'A', '203.0.113.5', 3600);</code></pre>
+
+  <h3>DnsService — TypeScript Implementation</h3>
+  <pre><code class="ts">// services/DnsService.ts
+import { PowerdnsClient } from './clients/PowerdnsClient';
+
+export class DnsService {
+  constructor(private pdns: PowerdnsClient, private db: Database) {}
+
+  async createZone(domain: string, serverIp: string): Promise&lt;void&gt; {
+    await this.pdns.createZone({
+      name: domain + '.',
+      kind: 'Native',
+      nameservers: ['ns1.yourserver.com.', 'ns2.yourserver.com.'],
+    });
+
+    // Default records for new hosting account
+    const defaultRecords = [
+      { name: domain,          type: 'A',   content: serverIp,        ttl: 3600 },
+      { name: `www.${domain}`, type: 'A',   content: serverIp,        ttl: 3600 },
+      { name: `mail.${domain}`,type: 'A',   content: serverIp,        ttl: 3600 },
+      { name: domain,          type: 'MX',  content: `mail.${domain}`,ttl: 3600, prio: 10 },
+      { name: domain,          type: 'TXT', content: `"v=spf1 a mx ip4:${serverIp} ~all"`, ttl: 3600 },
+    ];
+
+    await this.pdns.addRecords(domain, defaultRecords);
+  }
+
+  async addRecord(accountId: string, record: DnsRecord): Promise&lt;void&gt; {
+    const account = await this.db.accounts.findById(accountId);
+    this.assertRecordOwnership(account, record.name); // prevent hijacking other domains
+
+    await this.pdns.addRecord(account.domain, record);
+    await this.db.dnsRecords.create({ ...record, accountId });
+  }
+
+  async deleteZone(domain: string): Promise&lt;void&gt; {
+    await this.pdns.deleteZone(domain + '.');
+    await this.db.dnsRecords.deleteByDomain(domain);
+  }
+
+  private assertRecordOwnership(account: Account, recordName: string): void {
+    const normalised = recordName.replace(/\.$/, '').toLowerCase();
+    if (!normalised.endsWith(account.domain) && normalised !== account.domain) {
+      throw new Error(`Record ${recordName} is outside account domain ${account.domain}`);
+    }
+  }
+}</code></pre>
+
+  <h3>Supported Record Types</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Type</th><th>Purpose</th><th>Validation</th></tr></thead>
+    <tbody>
+      <tr><td class="td-m">A</td><td>Maps hostname to IPv4</td><td>Must be valid IPv4 address</td></tr>
+      <tr><td class="td-m">AAAA</td><td>Maps hostname to IPv6</td><td>Must be valid IPv6 address</td></tr>
+      <tr><td class="td-m">CNAME</td><td>Alias to another hostname</td><td>Cannot be set on apex domain</td></tr>
+      <tr><td class="td-m">MX</td><td>Mail server routing</td><td>Priority 0–65535, must be hostname</td></tr>
+      <tr><td class="td-m">TXT</td><td>SPF, DKIM, DMARC, verification</td><td>Max 255 chars per string</td></tr>
+      <tr><td class="td-m">NS</td><td>Nameserver delegation</td><td>Admin-only — must end with dot</td></tr>
+      <tr><td class="td-m">SRV</td><td>Service location records</td><td>Priority, weight, port, target</td></tr>
+      <tr><td class="td-m">CAA</td><td>SSL certificate authority auth</td><td>issue/issuewild/iodef tags</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S6 ─────────────────────── -->
+<section class="section" id="s6">
+  <div class="sec-hdr"><span class="sec-num">§ 06</span><h2>Email System</h2></div>
+
+  <p>Email is the most complex subsystem. You need Postfix (SMTP), Dovecot (IMAP/POP3), and a virtual mailbox setup backed by your database. Never use system Linux users for mailboxes — use virtual users stored in MySQL.</p>
+
+  <h3>Stack: Postfix + Dovecot + Virtual Mailboxes</h3>
+  <pre><code class="bash"># /etc/postfix/main.cf (relevant virtual mailbox settings)
+virtual_mailbox_domains = mysql:/etc/postfix/mysql-virtual-domains.cf
+virtual_mailbox_maps    = mysql:/etc/postfix/mysql-virtual-mailboxes.cf
+virtual_alias_maps      = mysql:/etc/postfix/mysql-virtual-aliases.cf
+virtual_transport       = dovecot
+virtual_uid_maps        = static:5000
+virtual_gid_maps        = static:5000
+virtual_mailbox_base    = /var/mail/vhosts
+
+# /etc/postfix/mysql-virtual-mailboxes.cf
+user     = postfix_user
+password = secret
+hosts    = 127.0.0.1
+dbname   = cpanel_clone
+query    = SELECT CONCAT(domain,'/',local_part,'/') FROM email_accounts
+           WHERE local_part='%u' AND domain='%d' AND status='active'</code></pre>
+
+  <h3>EmailService</h3>
+  <pre><code class="ts">// services/EmailService.ts
+import { execAsync } from '../utils/shell';
+import bcrypt from 'bcrypt';
+
+export class EmailService {
+  async createMailbox(accountId: string, params: CreateMailboxParams): Promise&lt;void&gt; {
+    const account = await this.db.accounts.findById(accountId);
+    const { localPart, domain, password, quota } = params;
+
+    // Validate domain belongs to this account
+    if (!account.domains.includes(domain)) throw new Error('Domain not owned by account');
+
+    // Validate quota within plan limits
+    const usedQuota = await this.getUsedEmailQuota(accountId);
+    if (usedQuota + quota &gt; account.plan.emailQuota) throw new Error('Email quota exceeded');
+
+    // Hash password for Dovecot CRAM-MD5 / SHA512
+    const hashedPw = await bcrypt.hash(password, 12);
+    const dovecotHash = await this.generateDovecotHash(password); // {SHA512-CRYPT}$6$...
+
+    // Persist to DB (Postfix reads from here)
+    await this.db.emailAccounts.create({
+      accountId,
+      localPart: localPart.toLowerCase(),
+      domain: domain.toLowerCase(),
+      passwordHash: dovecotHash,
+      quotaMb: quota,
+      status: 'active',
+    });
+
+    // Create physical maildir
+    const maildir = `/var/mail/vhosts/${domain}/${localPart}`;
+    await execAsync(`mkdir -p ${maildir}/{cur,new,tmp}`);
+    await execAsync(`chown -R vmail:vmail ${maildir}`);
+
+    // Set Dovecot quota
+    await this.setDovecotQuota(localPart, domain, quota);
+  }
+
+  async createForwarder(accountId: string, params: CreateForwarderParams): Promise&lt;void&gt; {
+    // Forwarders are rows in email_forwarders table
+    // Postfix virtual_alias_maps query picks them up automatically
+    const { source, destination } = params;
+    await this.db.emailForwarders.create({ accountId, source, destination, status: 'active' });
+  }
+
+  async deleteMailbox(accountId: string, email: string): Promise&lt;void&gt; {
+    const [localPart, domain] = email.split('@');
+    await this.db.emailAccounts.setStatus(email, 'deleted');
+    // Optionally archive the maildir before deletion
+    const maildir = `/var/mail/vhosts/${domain}/${localPart}`;
+    await execAsync(`mv ${maildir} ${maildir}.deleted.${Date.now()}`);
+  }
+}</code></pre>
+
+  <h3>Email Subsystems</h3>
+  <div class="grid2">
+    <div class="card"><h5>Spam filtering — SpamAssassin</h5><p>Run as a Postfix content filter. Per-account rules stored in DB. Adjustable score threshold via UI.</p></div>
+    <div class="card"><h5>DKIM signing</h5><p>OpenDKIM generates a key pair per domain. Public key goes into DNS as a TXT record. Private key is stored in <code>/etc/opendkim/keys/{domain}/</code>.</p></div>
+    <div class="card"><h5>Autoresponders</h5><p>Implemented as Postfix transport rules + a simple Node.js SMTP daemon that sends the canned reply and stores a suppression list (max one reply per sender per 24h).</p></div>
+    <div class="card"><h5>Mailing lists</h5><p>Powered by Mailman 3 or a lightweight alternative. The UI creates the list config; Mailman handles subscriber management and archiving.</p></div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S7 ─────────────────────── -->
+<section class="section" id="s7">
+  <div class="sec-hdr"><span class="sec-num">§ 07</span><h2>File Manager</h2></div>
+
+  <p>The file manager is a web-based filesystem browser scoped strictly to the account's home directory (<code>/home/{username}/</code>). It must enforce that all operations stay within that boundary — path traversal attacks are the number one risk here.</p>
+
+  <h3>Security-First Path Resolution</h3>
+  <pre><code class="ts">// services/FileService.ts
+import path from 'path';
+import fs from 'fs/promises';
+import archiver from 'archiver';
+
+export class FileService {
+  private getAccountRoot(username: string): string {
+    return `/home/${username}`;
+  }
+
+  private resolveSafe(username: string, userPath: string): string {
+    const root = this.getAccountRoot(username);
+    // Resolve to absolute path, then check it starts with root
+    const resolved = path.resolve(root, userPath.replace(/^\/+/, ''));
+    if (!resolved.startsWith(root + '/') && resolved !== root) {
+      throw new Error('Path traversal attempt detected');
+    }
+    return resolved;
+  }
+
+  async listDirectory(username: string, dirPath: string): Promise&lt;FileEntry[]&gt; {
+    const safePath = this.resolveSafe(username, dirPath);
+    const entries = await fs.readdir(safePath, { withFileTypes: true });
+
+    return Promise.all(entries.map(async (entry) => {
+      const fullPath = path.join(safePath, entry.name);
+      const stat = await fs.stat(fullPath);
+      return {
+        name: entry.name,
+        type: entry.isDirectory() ? 'directory' : 'file',
+        size: stat.size,
+        permissions: (stat.mode &amp; 0o777).toString(8), // e.g. "755"
+        modifiedAt: stat.mtime,
+        mimeType: entry.isFile() ? await this.getMimeType(fullPath) : null,
+      };
+    }));
+  }
+
+  async uploadFile(username: string, destDir: string, filename: string, buffer: Buffer): Promise&lt;void&gt; {
+    const safeDest = this.resolveSafe(username, path.join(destDir, filename));
+    await fs.writeFile(safeDest, buffer);
+    // Restore proper ownership (files uploaded as root must be chowned)
+    await execAsync(`chown ${username}:${username} "${safeDest}"`);
+  }
+
+  async changePermissions(username: string, filePath: string, mode: string): Promise&lt;void&gt; {
+    // Validate mode: must be 3-digit octal string, max 755 for files
+    if (!/^[0-7]{3}$/.test(mode)) throw new Error('Invalid permission mode');
+    if (parseInt(mode, 8) &gt; 0o755) throw new Error('Permission too permissive');
+    const safePath = this.resolveSafe(username, filePath);
+    await fs.chmod(safePath, parseInt(mode, 8));
+  }
+
+  async compress(username: string, paths: string[], destName: string): Promise&lt;void&gt; {
+    const root = this.getAccountRoot(username);
+    const safePaths = paths.map(p =&gt; this.resolveSafe(username, p));
+    const destPath = this.resolveSafe(username, destName);
+    // Use archiver to create zip/tar.gz
+    const output = require('fs').createWriteStream(destPath);
+    const archive = archiver('zip');
+    archive.pipe(output);
+    for (const p of safePaths) archive.file(p, { name: path.relative(root, p) });
+    await archive.finalize();
+  }
+}</code></pre>
+
+  <h3>File Manager UI Operations</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Operation</th><th>Backend Action</th><th>Risk</th></tr></thead>
+    <tbody>
+      <tr><td>Browse directory</td><td><code>fs.readdir</code> + <code>stat</code></td><td>Path traversal → safePath check</td></tr>
+      <tr><td>Upload file</td><td>Multipart stream → <code>fs.writeFile</code></td><td>File size limit, MIME type check</td></tr>
+      <tr><td>Edit file</td><td>Read → return content → write on save</td><td>Max edit size 2 MB; binary files blocked</td></tr>
+      <tr><td>Delete file/dir</td><td><code>fs.unlink</code> / <code>fs.rm --recursive</code></td><td>Confirm prompt; soft-delete to trash dir</td></tr>
+      <tr><td>Rename / Move</td><td><code>fs.rename</code></td><td>Destination path traversal check</td></tr>
+      <tr><td>Change permissions</td><td><code>fs.chmod</code></td><td>Max 755 for files, 755 for dirs</td></tr>
+      <tr><td>Compress</td><td><code>archiver</code> → zip/tar.gz</td><td>Bomb check: max output 2 GB</td></tr>
+      <tr><td>Extract archive</td><td><code>unzipper</code> / <code>tar</code></td><td>Path traversal inside archive (zip slip)</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="call danger">
+    <span class="call-lbl">Zip Slip Attack</span>
+    <p>When extracting archives, check every entry path. An archive can contain entries like <code>../../etc/passwd</code>. Always resolve each entry path and verify it stays within the account's home directory before writing.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S8 ─────────────────────── -->
+<section class="section" id="s8">
+  <div class="sec-hdr"><span class="sec-num">§ 08</span><h2>Database Management</h2></div>
+
+  <p>Each hosting account gets its own set of MySQL databases and users, isolated by prefix (<code>{username}_</code>). Your DatabaseService executes DDL statements against the server's MySQL instance with a highly-privileged service account, then grants appropriate permissions to the account-level MySQL user.</p>
+
+  <pre><code class="ts">// services/DatabaseService.ts
+import mysql from 'mysql2/promise';
+
+export class DatabaseService {
+  constructor(private adminPool: mysql.Pool) {} // root-level MySQL connection
+
+  async createDatabase(accountId: string, dbName: string): Promise&lt;void&gt; {
+    const account = await this.accountRepo.findById(accountId);
+    const prefixed = `${account.username}_${dbName}`;
+
+    // Check count limit from plan
+    const count = await this.db.mysqlDatabases.countForAccount(accountId);
+    if (count &gt;= account.plan.maxDatabases) throw new Error('Database limit reached');
+
+    // Validate name: alphanumeric + underscore only, max 64 chars after prefix
+    if (!/^[a-z0-9_]{1,48}$/.test(dbName)) throw new Error('Invalid database name');
+
+    await this.adminPool.execute(`CREATE DATABASE IF NOT EXISTS \`${prefixed}\``);
+    await this.db.mysqlDatabases.create({ accountId, name: prefixed, displayName: dbName });
+  }
+
+  async createUser(accountId: string, params: CreateDbUserParams): Promise&lt;void&gt; {
+    const account = await this.accountRepo.findById(accountId);
+    const { username, password } = params;
+    const prefixed = `${account.username}_${username}`;
+
+    // MySQL usernames have a 32-char limit
+    if (prefixed.length &gt; 32) throw new Error('Username too long');
+
+    await this.adminPool.execute(
+      `CREATE USER IF NOT EXISTS ?@'localhost' IDENTIFIED BY ?`,
+      [prefixed, password]
+    );
+    await this.db.mysqlUsers.create({ accountId, username: prefixed });
+  }
+
+  async assignUserToDatabase(
+    accountId: string, dbName: string, dbUser: string, privileges: string[]
+  ): Promise&lt;void&gt; {
+    const validPrivileges = ['ALL', 'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'INDEX', 'ALTER'];
+    const sanitised = privileges.filter(p =&gt; validPrivileges.includes(p.toUpperCase()));
+
+    await this.adminPool.execute(
+      `GRANT ${sanitised.join(',')} ON \`${dbName}\`.* TO ?@'localhost'`,
+      [dbUser]
+    );
+    await this.adminPool.execute('FLUSH PRIVILEGES');
+
+    await this.db.mysqlAssignments.upsert({ accountId, dbName, dbUser, privileges: sanitised });
+  }
+
+  async dropDatabase(accountId: string, dbName: string): Promise&lt;void&gt; {
+    await this.assertDatabaseOwnership(accountId, dbName);
+    await this.adminPool.execute(`DROP DATABASE IF EXISTS \`${dbName}\``);
+    await this.db.mysqlDatabases.delete(dbName);
+  }
+}</code></pre>
+
+  <h3>phpMyAdmin Integration</h3>
+  <p>Rather than rebuilding a database GUI, embed phpMyAdmin running behind your auth proxy. When a user clicks "phpMyAdmin" in the UI, your backend creates a temporary single-sign-on token, and the user is redirected to a pre-authenticated phpMyAdmin session scoped to their databases only.</p>
+
+  <pre><code class="ts">// SSO token for phpMyAdmin
+async function generatePhpMyAdminSSOToken(username: string, dbUser: string): Promise&lt;string&gt; {
+  const token = randomBytes(32).toString('hex');
+  await redis.setex(`pma:sso:${token}`, 60, JSON.stringify({ dbUser })); // 60s TTL
+  return token;
+}
+
+// phpMyAdmin config.inc.php reads the token
+// $cfg['Servers'][$i]['auth_type'] = 'signon';
+// $cfg['Servers'][$i]['SignonSession'] = 'SignonSession';
+// $cfg['Servers'][$i]['SignonURL'] = 'https://yourpanel.com/pma-sso?token=...';
+</code></pre>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S9 ─────────────────────── -->
+<section class="section" id="s9">
+  <div class="sec-hdr"><span class="sec-num">§ 09</span><h2>FTP Accounts</h2></div>
+
+  <p>Use <strong>ProFTPd</strong> with virtual users stored in your MySQL database. This avoids creating real Linux users for every FTP account. ProFTPd queries your DB directly for auth and directory scoping.</p>
+
+  <pre><code class="bash"># /etc/proftpd/conf.d/sql.conf
+&lt;IfModule mod_sql.c&gt;
+  SQLBackend               mysql
+  SQLConnectInfo           cpanel_clone@localhost cpanel_user secret
+  SQLAuthTypes             SHA512
+  SQLAuthenticate          users groups
+  SQLUserInfo              ftp_accounts username password uid gid homedir shell
+  SQLGroupInfo             ftp_groups groupname gid members
+  SQLLog PASS              updateLastLogin
+  SQLNamedQuery            updateLastLogin UPDATE "last_login=NOW() WHERE username='%u'" ftp_accounts
+&lt;/IfModule&gt;
+
+&lt;IfModule mod_quotatab_sql.c&gt;
+  QuotaEngine              on
+  SQLNamedQuery            get-quota-limit SELECT "quota_mb FROM ftp_accounts WHERE username='%u'"
+&lt;/IfModule&gt;</code></pre>
+
+  <h3>FTP Service</h3>
+  <pre><code class="ts">// services/FtpService.ts
+export class FtpService {
+  async createFtpAccount(accountId: string, params: CreateFtpParams): Promise&lt;void&gt; {
+    const account = await this.accountRepo.findById(accountId);
+    const { username, password, directory, quota } = params;
+
+    const fullUsername = `${account.username}_${username}`;
+    const homeDir = this.resolveScopeDir(account.username, directory);
+
+    // Password hashed for ProFTPd SHA512
+    const hashedPw = await this.hashFtpPassword(password);
+
+    await this.db.ftpAccounts.create({
+      accountId,
+      username: fullUsername,
+      password: hashedPw,
+      homedir: homeDir,
+      quotaMb: quota ?? account.plan.ftpQuota,
+      uid: account.systemUid,
+      gid: account.systemGid,
+    });
+
+    // Ensure directory exists
+    await execAsync(`mkdir -p "${homeDir}" && chown ${account.username}: "${homeDir}"`);
+  }
+
+  private resolveScopeDir(username: string, dir: string): string {
+    const home = `/home/${username}`;
+    if (!dir || dir === '/') return `${home}/public_html`;
+    const resolved = path.resolve(home, dir.replace(/^\/+/, ''));
+    if (!resolved.startsWith(home)) throw new Error('Directory outside account home');
+    return resolved;
+  }
+}</code></pre>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S10 ─────────────────────── -->
+<section class="section" id="s10">
+  <div class="sec-hdr"><span class="sec-num">§ 10</span><h2>SSL / TLS Management</h2></div>
+
+  <p>Integrate <strong>Certbot</strong> (Let's Encrypt) for automatic certificate issuance and renewal. Your SslService runs Certbot as a subprocess, then configures Nginx with the resulting certificate files.</p>
+
+  <pre><code class="ts">// services/SslService.ts
+export class SslService {
+  async issueLetsEncrypt(accountId: string, domain: string): Promise&lt;void&gt; {
+    // Verify domain's A record points to this server
+    const resolved = await dns.resolve4(domain);
+    if (!resolved.includes(this.serverIp)) {
+      throw new Error(`Domain ${domain} does not point to this server`);
+    }
+
+    const email = await this.getAccountEmail(accountId);
+
+    // Run certbot
+    const { stdout, stderr } = await execAsync(
+      `certbot certonly --webroot -w /home/${await this.getUsername(accountId)}/public_html ` +
+      `-d ${domain} -d www.${domain} --email ${email} --agree-tos --non-interactive`
+    );
+
+    // Update Nginx vhost to use new cert
+    await this.nginxService.enableSsl(domain, {
+      certPath: `/etc/letsencrypt/live/${domain}/fullchain.pem`,
+      keyPath:  `/etc/letsencrypt/live/${domain}/privkey.pem`,
+    });
+
+    await this.db.sslCertificates.upsert({
+      accountId, domain,
+      issuer: 'letsencrypt',
+      expiresAt: addDays(new Date(), 90),
+      autoRenew: true,
+    });
+  }
+
+  async installCustomCertificate(accountId: string, domain: string, cert: string, key: string, chain?: string): Promise&lt;void&gt; {
+    // Validate cert + key match
+    await this.validateCertKeyPair(cert, key);
+
+    const certDir = `/etc/ssl/custom/${domain}`;
+    await execAsync(`mkdir -p ${certDir}`);
+    await fs.writeFile(`${certDir}/cert.pem`,  cert);
+    await fs.writeFile(`${certDir}/key.pem`,   key);
+    if (chain) await fs.writeFile(`${certDir}/chain.pem`, chain);
+
+    await this.nginxService.enableSsl(domain, {
+      certPath: `${certDir}/cert.pem`,
+      keyPath:  `${certDir}/key.pem`,
+    });
+  }
+}
+
+// Renewal cron — runs daily via BullMQ
+async function renewExpiringSslCerts(): Promise&lt;void&gt; {
+  const expiring = await db.sslCertificates.findExpiringWithin(30, { autoRenew: true });
+  for (const cert of expiring) {
+    await sslService.issueLetsEncrypt(cert.accountId, cert.domain);
+  }
+}</code></pre>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S11 ─────────────────────── -->
+<section class="section" id="s11">
+  <div class="sec-hdr"><span class="sec-num">§ 11</span><h2>Domain & Subdomain Logic</h2></div>
+
+  <h3>Domain Types</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Type</th><th>What It Is</th><th>What Gets Created</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Primary domain</strong></td><td>The main domain of the hosting account</td><td>Nginx vhost, DNS zone, home dir at <code>/home/{user}/public_html</code></td></tr>
+      <tr><td><strong>Addon domain</strong></td><td>A fully separate domain pointing to a different dir within the account</td><td>Nginx vhost, DNS zone, dir at <code>/home/{user}/addon_domains/{domain}</code></td></tr>
+      <tr><td><strong>Parked domain</strong></td><td>An alias domain that shows same content as primary</td><td>Nginx server_name alias added to primary vhost</td></tr>
+      <tr><td><strong>Subdomain</strong></td><td><code>sub.domain.com</code> pointing to a dir</td><td>Nginx location or separate vhost, DNS A record</td></tr>
+      <tr><td><strong>Redirect</strong></td><td>Domain or path that 301/302 redirects elsewhere</td><td>Nginx return directive</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Nginx Vhost Template (per account)</h3>
+  <pre><code class="nginx"># /etc/nginx/sites-available/{username}_{domain}.conf
+# Generated by NginxService.writeVhostConfig()
+server {
+    listen 80;
+    listen [::]:80;
+    server_name example.com www.example.com;
+
+    root /home/johndoe/public_html;
+    index index.php index.html;
+
+    access_log /var/log/nginx/johndoe_access.log combined;
+    error_log  /var/log/nginx/johndoe_error.log;
+
+    # PHP-FPM — pool per account (resource isolation)
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/fpm-johndoe.sock;
+    }
+
+    location ~ /\.ht { deny all; }
+
+    # SSL block added by SslService after cert issuance
+    # listen 443 ssl http2;
+    # ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+    # include snippets/ssl-params.conf;
+}
+</code></pre>
+
+  <h3>NginxService — Vhost Management</h3>
+  <pre><code class="ts">export class NginxService {
+  private configDir = '/etc/nginx/sites-available';
+  private enabledDir = '/etc/nginx/sites-enabled';
+
+  async writeVhostConfig(domain: string, username: string, root: string): Promise&lt;void&gt; {
+    const config = this.renderTemplate({ domain, username, root });
+    const filePath = `${this.configDir}/${username}_${domain}.conf`;
+    await fs.writeFile(filePath, config);
+    // Symlink to sites-enabled
+    await execAsync(`ln -sf ${filePath} ${this.enabledDir}/`);
+    await this.reload();
+  }
+
+  async reload(): Promise&lt;void&gt; {
+    const { stderr } = await execAsync('nginx -t'); // test config first
+    if (stderr.includes('failed')) throw new Error('Nginx config test failed:\n' + stderr);
+    await execAsync('nginx -s reload');
+  }
+
+  async removeVhost(domain: string, username: string): Promise&lt;void&gt; {
+    const filename = `${username}_${domain}.conf`;
+    await execAsync(`rm -f ${this.enabledDir}/${filename}`);
+    await execAsync(`rm -f ${this.configDir}/${filename}`);
+    await this.reload();
+  }
+}</code></pre>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S12 ─────────────────────── -->
+<section class="section" id="s12">
+  <div class="sec-hdr"><span class="sec-num">§ 12</span><h2>Resource Quotas</h2></div>
+
+  <p>Resource limits are enforced at two levels: application-level (tracked in your DB) and OS-level (enforced by the kernel). Never rely on application-level alone — a client could bypass your API and write directly via FTP.</p>
+
+  <h3>Plan Resource Types</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Resource</th><th>OS Enforcement</th><th>App Enforcement</th></tr></thead>
+    <tbody>
+      <tr><td>Disk space</td><td><code>quota</code> command — sets hard limit per Linux user</td><td>Check before file upload, backup restore</td></tr>
+      <tr><td>Bandwidth</td><td>Nginx log parsing (monthly cumulative)</td><td>Check against plan limit; suspend if exceeded</td></tr>
+      <tr><td>Email accounts</td><td>—</td><td>Count check before creating new mailbox</td></tr>
+      <tr><td>MySQL databases</td><td>—</td><td>Count check before create</td></tr>
+      <tr><td>FTP accounts</td><td>—</td><td>Count check before create</td></tr>
+      <tr><td>Subdomains</td><td>—</td><td>Count check before create</td></tr>
+      <tr><td>Addon domains</td><td>—</td><td>Count check before create</td></tr>
+      <tr><td>Cron jobs</td><td>—</td><td>Count check before create</td></tr>
+      <tr><td>Inodes (file count)</td><td><code>quota -i</code> inode limit</td><td>—</td></tr>
+      <tr><td>CPU / memory</td><td>PHP-FPM per-pool limits (<code>pm.max_children</code>)</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+
+  <pre><code class="bash"># Set disk quota for a Linux user (requires quota kernel module)
+# Block limit (1 block = 1 KB), soft limit = plan_mb, hard limit = plan_mb * 1.1
+setquota -u johndoe 10485760 11534336 0 0 /home
+# Verify
+repquota -u /home | grep johndoe</code></pre>
+
+  <pre><code class="ts">// services/QuotaService.ts
+export class QuotaService {
+  async setDiskQuota(username: string, planMb: number): Promise&lt;void&gt; {
+    const softBlocks = planMb * 1024;           // MB to KB blocks
+    const hardBlocks = Math.ceil(softBlocks * 1.1); // 10% grace
+    await execAsync(`setquota -u ${username} ${softBlocks} ${hardBlocks} 0 0 /home`);
+  }
+
+  async getDiskUsage(username: string): Promise&lt;{ usedMb: number; quotaMb: number }&gt; {
+    const { stdout } = await execAsync(`quota -u ${username} --hide-device -q 2&gt;/dev/null || true`);
+    const match = stdout.match(/(\d+)\s+(\d+)/);
+    return {
+      usedMb: match ? Math.ceil(parseInt(match[1]) / 1024) : 0,
+      quotaMb: match ? Math.ceil(parseInt(match[2]) / 1024) : 0,
+    };
+  }
+
+  async getBandwidthUsed(accountId: string, month?: Date): Promise&lt;number&gt; {
+    // Sum from bandwidth_logs table (populated by nginx log parser job)
+    return this.db.bandwidthLogs.sumForMonth(accountId, month ?? new Date());
+  }
+}</code></pre>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S13 ─────────────────────── -->
+<section class="section" id="s13">
+  <div class="sec-hdr"><span class="sec-num">§ 13</span><h2>Backup System</h2></div>
+
+  <p>Backups cover two things: the account's <code>/home/{username}</code> directory and all MySQL databases owned by the account. Both are compressed and stored — either locally or on remote object storage (S3-compatible).</p>
+
+  <pre><code class="ts">// services/BackupService.ts
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { createReadStream } from 'fs';
+import { exec } from 'child_process';
+
+export class BackupService {
+  constructor(private s3: S3Client, private bucket: string) {}
+
+  async createFullBackup(accountId: string): Promise&lt;BackupRecord&gt; {
+    const account = await this.accountRepo.findById(accountId);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupName = `${account.username}_${timestamp}`;
+    const tmpPath = `/tmp/backups/${backupName}`;
+
+    await execAsync(`mkdir -p ${tmpPath}`);
+
+    // 1. Archive home directory
+    await execAsync(
+      `tar -czf ${tmpPath}/homedir.tar.gz -C /home ${account.username} ` +
+      `--exclude='${account.username}/.cache' --exclude='${account.username}/tmp'`
+    );
+
+    // 2. Dump all MySQL databases for this account
+    const databases = await this.db.mysqlDatabases.findByAccount(accountId);
+    for (const db of databases) {
+      await execAsync(
+        `mysqldump --single-transaction --routines --triggers ` +
+        `${db.name} | gzip &gt; ${tmpPath}/${db.name}.sql.gz`
+      );
+    }
+
+    // 3. Create manifest
+    const manifest = { account: account.username, timestamp, databases: databases.map(d =&gt; d.name) };
+    await fs.writeFile(`${tmpPath}/manifest.json`, JSON.stringify(manifest, null, 2));
+
+    // 4. Pack everything into one archive
+    const archivePath = `/tmp/${backupName}.tar.gz`;
+    await execAsync(`tar -czf ${archivePath} -C /tmp/backups ${backupName}`);
+
+    // 5. Upload to S3 (or keep local)
+    const s3Key = `backups/${account.username}/${backupName}.tar.gz`;
+    await this.s3.send(new PutObjectCommand({
+      Bucket: this.bucket, Key: s3Key,
+      Body: createReadStream(archivePath),
+    }));
+
+    // 6. Cleanup temp files
+    await execAsync(`rm -rf ${tmpPath} ${archivePath}`);
+
+    return this.db.backups.create({
+      accountId, name: backupName, s3Key,
+      sizeBytes: (await fs.stat(archivePath)).size,
+      type: 'full', status: 'completed',
+    });
+  }
+
+  async restore(accountId: string, backupId: string): Promise&lt;void&gt; {
+    // Download from S3, extract, restore files + databases
+    // ... (reverse of above)
+  }
+}</code></pre>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S14 ─────────────────────── -->
+<section class="section" id="s14">
+  <div class="sec-hdr"><span class="sec-num">§ 14</span><h2>Software Installer (WordPress)</h2></div>
+
+  <p>Equivalent to Softaculous. For MVP, implement only WordPress. The installer downloads WordPress core, configures <code>wp-config.php</code>, creates a database, runs the install script, and sets up the correct file permissions.</p>
+
+  <pre><code class="ts">// services/AppInstallerService.ts
+export class AppInstallerService {
+
+  async installWordPress(accountId: string, params: WpInstallParams): Promise&lt;void&gt; {
+    const account   = await this.accountRepo.findById(accountId);
+    const { domain, path: installPath, dbName, adminUser, adminPassword, adminEmail, siteTitle } = params;
+
+    const installDir = this.fileService.resolveSafe(account.username, installPath);
+
+    // 1. Download & extract WordPress
+    await execAsync(`wget -qO /tmp/wp.tar.gz https://wordpress.org/latest.tar.gz`);
+    await execAsync(`tar -xzf /tmp/wp.tar.gz -C /tmp`);
+    await execAsync(`rsync -a /tmp/wordpress/ ${installDir}/`);
+    await execAsync(`chown -R ${account.username}: ${installDir}`);
+
+    // 2. Create database + user
+    const dbUser = `${account.username}_wp`;
+    const dbPass = generatePassword(20);
+    const prefixedDb = `${account.username}_${dbName}`;
+    await this.dbService.createDatabase(accountId, dbName);
+    await this.dbService.createUser(accountId, { username: 'wp', password: dbPass });
+    await this.dbService.assignUserToDatabase(accountId, prefixedDb, dbUser, ['ALL']);
+
+    // 3. Write wp-config.php
+    await execAsync(`
+      cp ${installDir}/wp-config-sample.php ${installDir}/wp-config.php
+      sed -i "s/database_name_here/${prefixedDb}/g" ${installDir}/wp-config.php
+      sed -i "s/username_here/${dbUser}/g" ${installDir}/wp-config.php
+      sed -i "s/password_here/${dbPass}/g" ${installDir}/wp-config.php
+    `);
+
+    // 4. Inject unique salts (fetch from WordPress API)
+    const salts = await fetch('https://api.wordpress.org/secret-key/1.1/salt/').then(r =&gt; r.text());
+    // Replace the placeholder salt block in wp-config.php
+
+    // 5. Run WP-CLI to complete installation
+    await execAsync(
+      `sudo -u ${account.username} wp core install ` +
+      `--path=${installDir} --url=https://${domain}${installPath} ` +
+      `--title="${siteTitle}" --admin_user=${adminUser} ` +
+      `--admin_password=${adminPassword} --admin_email=${adminEmail} --skip-email`
+    );
+
+    // 6. Set file permissions
+    await execAsync(`find ${installDir} -type f -exec chmod 644 {} \\;`);
+    await execAsync(`find ${installDir} -type d -exec chmod 755 {} \\;`);
+
+    await this.db.installedApps.create({ accountId, domain, path: installPath, app: 'wordpress' });
+  }
+}</code></pre>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S15 ─────────────────────── -->
+<section class="section" id="s15">
+  <div class="sec-hdr"><span class="sec-num">§ 15</span><h2>Database Design</h2></div>
+
+  <h3>Entity Relationship Diagram</h3>
+  <div class="dia">
+    <div class="mermaid">
+erDiagram
+    SERVERS {
+        uuid id PK
+        string hostname
+        string ip_address
+        string os_version
+        int max_accounts
+        string status
+    }
+    PLANS {
+        uuid id PK
+        string name
+        int disk_mb
+        int bandwidth_mb
+        int max_email_accounts
+        int max_databases
+        int max_ftp_accounts
+        int max_subdomains
+        int max_addon_domains
+        int max_cron_jobs
+        string php_versions
+    }
+    ACCOUNTS {
+        uuid id PK
+        uuid server_id FK
+        uuid plan_id FK
+        uuid reseller_id FK
+        string username
+        string primary_domain
+        string email
+        string password_hash
+        int system_uid
+        int system_gid
+        string status
+        timestamp suspended_at
+        string suspend_reason
+        timestamp created_at
+    }
+    DOMAINS {
+        uuid id PK
+        uuid account_id FK
+        string domain
+        string type
+        string document_root
+        boolean ssl_enabled
+        string ssl_cert_path
+        timestamp ssl_expires_at
+        string status
+    }
+    EMAIL_ACCOUNTS {
+        uuid id PK
+        uuid account_id FK
+        string local_part
+        string domain
+        string password_hash
+        int quota_mb
+        string status
+    }
+    EMAIL_FORWARDERS {
+        uuid id PK
+        uuid account_id FK
+        string source
+        string destination
+        string status
+    }
+    MYSQL_DATABASES {
+        uuid id PK
+        uuid account_id FK
+        string name
+        string display_name
+        timestamp created_at
+    }
+    MYSQL_USERS {
+        uuid id PK
+        uuid account_id FK
+        string username
+        timestamp created_at
+    }
+    FTP_ACCOUNTS {
+        uuid id PK
+        uuid account_id FK
+        string username
+        string password_hash
+        string homedir
+        int quota_mb
+        string status
+    }
+    SSL_CERTIFICATES {
+        uuid id PK
+        uuid account_id FK
+        string domain
+        string issuer
+        string cert_path
+        string key_path
+        timestamp expires_at
+        boolean auto_renew
+    }
+    BACKUPS {
+        uuid id PK
+        uuid account_id FK
+        string name
+        string storage_path
+        bigint size_bytes
+        string type
+        string status
+        timestamp created_at
+    }
+    DNS_RECORDS {
+        uuid id PK
+        uuid account_id FK
+        string domain
+        string name
+        string type
+        string content
+        int ttl
+        int priority
+    }
+
+    SERVERS ||--o{ ACCOUNTS : "hosts"
+    PLANS ||--o{ ACCOUNTS : "governs"
+    ACCOUNTS ||--o{ DOMAINS : "owns"
+    ACCOUNTS ||--o{ EMAIL_ACCOUNTS : "has"
+    ACCOUNTS ||--o{ EMAIL_FORWARDERS : "has"
+    ACCOUNTS ||--o{ MYSQL_DATABASES : "has"
+    ACCOUNTS ||--o{ MYSQL_USERS : "has"
+    ACCOUNTS ||--o{ FTP_ACCOUNTS : "has"
+    ACCOUNTS ||--o{ SSL_CERTIFICATES : "has"
+    ACCOUNTS ||--o{ BACKUPS : "has"
+    ACCOUNTS ||--o{ DNS_RECORDS : "manages"
+    </div>
+  </div>
+
+  <h3>Core Accounts Table</h3>
+  <pre><code class="sql">CREATE TABLE accounts (
+  id              CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  server_id       CHAR(36) NOT NULL,
+  plan_id         CHAR(36) NOT NULL,
+  reseller_id     CHAR(36) DEFAULT NULL,
+  username        VARCHAR(32) NOT NULL,
+  primary_domain  VARCHAR(253) NOT NULL,
+  email           VARCHAR(254) NOT NULL,
+  password_hash   TEXT NOT NULL,
+  system_uid      INT NOT NULL,
+  system_gid      INT NOT NULL,
+  home_dir        VARCHAR(300) AS (CONCAT('/home/', username)) STORED,
+  status          ENUM('active','suspended','terminated','provisioning') NOT NULL DEFAULT 'active',
+  suspended_at    DATETIME DEFAULT NULL,
+  suspend_reason  TEXT DEFAULT NULL,
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_accounts_server   FOREIGN KEY (server_id)   REFERENCES servers(id),
+  CONSTRAINT fk_accounts_plan     FOREIGN KEY (plan_id)     REFERENCES plans(id),
+  CONSTRAINT fk_accounts_reseller FOREIGN KEY (reseller_id) REFERENCES accounts(id),
+  UNIQUE KEY uq_accounts_username (username),
+  UNIQUE KEY uq_accounts_domain   (primary_domain),
+  UNIQUE KEY uq_accounts_uid      (system_uid)
+);
+
+CREATE INDEX idx_accounts_reseller ON accounts(reseller_id);
+CREATE INDEX idx_accounts_status   ON accounts(status);</code></pre>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S16 ─────────────────────── -->
+<section class="section" id="s16">
+  <div class="sec-hdr"><span class="sec-num">§ 16</span><h2>API Design</h2></div>
+
+  <h4>Account Management</h4>
+  <div class="ep"><span class="m post">POST</span><span class="ep-path">/api/v1/accounts</span><span class="ep-note">Create hosting account (provision)</span></div>
+  <div class="ep"><span class="m get">GET</span><span class="ep-path">/api/v1/accounts</span><span class="ep-note">List accounts (admin/reseller)</span></div>
+  <div class="ep"><span class="m get">GET</span><span class="ep-path">/api/v1/accounts/:id</span><span class="ep-note">Get account details + usage</span></div>
+  <div class="ep"><span class="m patch">PATCH</span><span class="ep-path">/api/v1/accounts/:id</span><span class="ep-note">Update plan, password, email</span></div>
+  <div class="ep"><span class="m post">POST</span><span class="ep-path">/api/v1/accounts/:id/suspend</span><span class="ep-note">Suspend account</span></div>
+  <div class="ep"><span class="m post">POST</span><span class="ep-path">/api/v1/accounts/:id/unsuspend</span><span class="ep-note">Reactivate account</span></div>
+  <div class="ep"><span class="m del">DELETE</span><span class="ep-path">/api/v1/accounts/:id</span><span class="ep-note">Terminate (async, queue job)</span></div>
+
+  <h4>DNS</h4>
+  <div class="ep"><span class="m get">GET</span><span class="ep-path">/api/v1/accounts/:id/dns/:domain</span><span class="ep-note">Get zone records</span></div>
+  <div class="ep"><span class="m post">POST</span><span class="ep-path">/api/v1/accounts/:id/dns/:domain/records</span><span class="ep-note">Add record</span></div>
+  <div class="ep"><span class="m put">PUT</span><span class="ep-path">/api/v1/accounts/:id/dns/:domain/records/:rid</span><span class="ep-note">Update record</span></div>
+  <div class="ep"><span class="m del">DELETE</span><span class="ep-path">/api/v1/accounts/:id/dns/:domain/records/:rid</span><span class="ep-note">Delete record</span></div>
+
+  <h4>Email</h4>
+  <div class="ep"><span class="m get">GET</span><span class="ep-path">/api/v1/accounts/:id/email/accounts</span><span class="ep-note">List mailboxes</span></div>
+  <div class="ep"><span class="m post">POST</span><span class="ep-path">/api/v1/accounts/:id/email/accounts</span><span class="ep-note">Create mailbox</span></div>
+  <div class="ep"><span class="m del">DELETE</span><span class="ep-path">/api/v1/accounts/:id/email/accounts/:email</span><span class="ep-note">Delete mailbox</span></div>
+  <div class="ep"><span class="m get">GET</span><span class="ep-path">/api/v1/accounts/:id/email/forwarders</span><span class="ep-note">List forwarders</span></div>
+  <div class="ep"><span class="m post">POST</span><span class="ep-path">/api/v1/accounts/:id/email/forwarders</span><span class="ep-note">Create forwarder</span></div>
+
+  <h4>Databases</h4>
+  <div class="ep"><span class="m get">GET</span><span class="ep-path">/api/v1/accounts/:id/mysql/databases</span><span class="ep-note">List databases</span></div>
+  <div class="ep"><span class="m post">POST</span><span class="ep-path">/api/v1/accounts/:id/mysql/databases</span><span class="ep-note">Create database</span></div>
+  <div class="ep"><span class="m del">DELETE</span><span class="ep-path">/api/v1/accounts/:id/mysql/databases/:db</span><span class="ep-note">Drop database</span></div>
+  <div class="ep"><span class="m post">POST</span><span class="ep-path">/api/v1/accounts/:id/mysql/users</span><span class="ep-note">Create MySQL user</span></div>
+  <div class="ep"><span class="m post">POST</span><span class="ep-path">/api/v1/accounts/:id/mysql/assign</span><span class="ep-note">Grant user to database</span></div>
+
+  <h4>Files, FTP, SSL</h4>
+  <div class="ep"><span class="m get">GET</span><span class="ep-path">/api/v1/accounts/:id/files</span><span class="ep-note">List directory (query: path)</span></div>
+  <div class="ep"><span class="m post">POST</span><span class="ep-path">/api/v1/accounts/:id/files/upload</span><span class="ep-note">Multipart file upload</span></div>
+  <div class="ep"><span class="m del">DELETE</span><span class="ep-path">/api/v1/accounts/:id/files</span><span class="ep-note">Delete file/dir (body: path)</span></div>
+  <div class="ep"><span class="m post">POST</span><span class="ep-path">/api/v1/accounts/:id/ftp</span><span class="ep-note">Create FTP account</span></div>
+  <div class="ep"><span class="m post">POST</span><span class="ep-path">/api/v1/accounts/:id/ssl/letsencrypt</span><span class="ep-note">Issue Let's Encrypt cert</span></div>
+  <div class="ep"><span class="m post">POST</span><span class="ep-path">/api/v1/accounts/:id/ssl/custom</span><span class="ep-note">Install custom cert/key</span></div>
+
+  <h3>WHMCS-Compatible Endpoint</h3>
+  <p>WHMCS talks to cPanel via its API2/UAPI. To receive provisioning calls from WHMCS, implement these three endpoints that map to WHMCS's "cPanel" module actions:</p>
+  <pre><code class="ts">// WHMCS sends these requests to your panel's API
+// POST /whm/createacct   → create account
+// POST /whm/suspendacct  → suspend
+// POST /whm/unsuspendacct→ unsuspend
+// POST /whm/terminateacct→ terminate
+// GET  /whm/accountsummary?user={username} → usage stats
+
+// Authentication: WHMCS uses HTTP Basic Auth with WHM root credentials
+// Your panel validates these against an API key stored in the DB
+</code></pre>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S17 ─────────────────────── -->
+<section class="section" id="s17">
+  <div class="sec-hdr"><span class="sec-num">§ 17</span><h2>Security Layer</h2></div>
+
+  <div class="grid2">
+    <div class="card red-l">
+      <h5>Command injection prevention</h5>
+      <p>Never interpolate user input directly into shell commands. Use parameterised <code>execFile</code> or validate all inputs against strict allowlists before shell use.</p>
+    </div>
+    <div class="card red-l">
+      <h5>Path traversal prevention</h5>
+      <p>All filesystem operations go through <code>resolveSafe()</code>. Resolved paths are checked to start with the account's home dir before any read/write/delete.</p>
+    </div>
+    <div class="card gold-l">
+      <h5>Privilege separation</h5>
+      <p>API server runs as an unprivileged user. Commands that need root are dispatched to a separate <code>privileged-worker</code> process via Unix socket with a strict allowlist of permitted operations.</p>
+    </div>
+    <div class="card gold-l">
+      <h5>Rate limiting</h5>
+      <p>Login: 5 attempts / 15 min per IP. API: 300 req/min per account. File upload: 50 req/min. SSL issue: 5 req/hour (Let's Encrypt rate limits).</p>
+    </div>
+  </div>
+
+  <h3>Privileged Worker Pattern</h3>
+  <pre><code class="ts">// privileged-worker.ts — runs as root, listens on Unix socket
+// API server sends signed commands via this socket only
+const ALLOWED_COMMANDS = [
+  'create_linux_user', 'delete_linux_user', 'set_quota',
+  'write_nginx_vhost',  'reload_nginx', 'run_certbot',
+  'create_ftp_user',   'set_php_version',
+] as const;
+
+socketServer.on('connection', (socket) => {
+  socket.on('data', async (data) => {
+    const { command, args, signature } = JSON.parse(data.toString());
+
+    // Verify HMAC signature (API server signs with shared secret)
+    if (!verifySignature(command, args, signature)) {
+      socket.write(JSON.stringify({ error: 'Invalid signature' }));
+      return;
+    }
+
+    if (!ALLOWED_COMMANDS.includes(command)) {
+      socket.write(JSON.stringify({ error: 'Command not allowed' }));
+      return;
+    }
+
+    const result = await executeCommand(command, args);
+    socket.write(JSON.stringify({ result }));
+  });
+});</code></pre>
+
+  <h3>Account Isolation</h3>
+  <div class="call info">
+    <span class="call-lbl">OS-Level Isolation</span>
+    <p>Each hosting account is a separate Linux user. PHP-FPM runs as that user's UID via per-account pools. This means a PHP script in account A cannot read files from account B, even if the script tries — the kernel enforces it. This is the most critical security property of a multi-tenant hosting environment.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S18 ─────────────────────── -->
+<section class="section" id="s18">
+  <div class="sec-hdr"><span class="sec-num">§ 18</span><h2>WHM — The Reseller / Admin Layer</h2></div>
+
+  <p>WHM (Web Host Manager) is the admin panel that sits above cPanel. It's where resellers create, manage, suspend, and terminate hosting accounts. In your clone, this is a separate React app at port 2087, backed by the same API with admin/reseller-scoped permissions.</p>
+
+  <h3>WHM Features to Implement</h3>
+  <div class="grid2">
+    <div class="card"><h5>Account management</h5><p>Create, list, search, suspend, terminate, change plan, change password for any account in the reseller's pool.</p></div>
+    <div class="card"><h5>Package / plan management</h5><p>Create plans (disk, bandwidth, email count limits). Assign plans to new accounts. Upgrade/downgrade existing accounts.</p></div>
+    <div class="card"><h5>DNS cluster</h5><p>View all zones on the server. Add/remove records globally. Manage nameserver A records.</p></div>
+    <div class="card"><h5>Server health</h5><p>CPU, RAM, disk usage. Apache/Nginx status. MySQL status. Per-account bandwidth consumption. Top accounts by resource use.</p></div>
+    <div class="card"><h5>Reseller resource limits</h5><p>Root sets limits per reseller: max accounts, max disk across all their accounts, max bandwidth. Reseller cannot exceed these.</p></div>
+    <div class="card"><h5>WHMCS API token</h5><p>Generate API keys for WHMCS integration. Revoke tokens. View API call logs.</p></div>
+  </div>
+
+  <h3>Account Suspension Logic</h3>
+  <pre><code class="ts">// services/AccountService.ts
+async suspend(accountId: string, reason: string): Promise&lt;void&gt; {
+  const account = await this.accountRepo.findById(accountId);
+
+  // 1. Disable Nginx vhost (redirect to suspended page)
+  await this.nginxService.writeVhostConfig(account.primaryDomain, account.username, '/var/www/suspended');
+
+  // 2. Lock Linux user (prevents SSH/FTP login)
+  await execAsync(`usermod -L ${account.username}`);
+
+  // 3. Disable email delivery (Postfix sets account status filter)
+  await this.db.emailAccounts.suspendByAccount(accountId);
+
+  // 4. Update account status
+  await this.accountRepo.update(accountId, { status: 'suspended', suspendedAt: new Date(), suspendReason: reason });
+
+  // 5. Log event
+  await this.db.accountLogs.create({ accountId, action: 'suspended', details: reason });
+}
+
+async unsuspend(accountId: string): Promise&lt;void&gt; {
+  const account = await this.accountRepo.findById(accountId);
+  await this.nginxService.writeVhostConfig(account.primaryDomain, account.username, `${account.homeDir}/public_html`);
+  await execAsync(`usermod -U ${account.username}`);
+  await this.db.emailAccounts.activateByAccount(accountId);
+  await this.accountRepo.update(accountId, { status: 'active', suspendedAt: null, suspendReason: null });
+}</code></pre>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S19 ─────────────────────── -->
+<section class="section" id="s19">
+  <div class="sec-hdr"><span class="sec-num">§ 19</span><h2>Full Tech Stack</h2></div>
+
+  <div class="tw"><table>
+    <thead><tr><th>Layer</th><th>Technology</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Web server</strong></td><td>Nginx</td><td>Per-vhost config, PHP-FPM proxying, reverse proxy for panel itself</td></tr>
+      <tr><td><strong>PHP runtime</strong></td><td>PHP-FPM (8.1, 8.2, 8.3 pools)</td><td>Per-account pools for OS-level isolation</td></tr>
+      <tr><td><strong>DNS server</strong></td><td>PowerDNS + MySQL backend</td><td>Programmatic zone management via DB; REST API available</td></tr>
+      <tr><td><strong>Mail server</strong></td><td>Postfix + Dovecot</td><td>Industry standard; virtual mailbox via DB</td></tr>
+      <tr><td><strong>FTP server</strong></td><td>ProFTPd</td><td>Virtual user support; SQL auth; directory jail</td></tr>
+      <tr><td><strong>SSL</strong></td><td>Certbot (Let's Encrypt)</td><td>Free, automated, wildcard support</td></tr>
+      <tr><td><strong>Database (app)</strong></td><td>MySQL 8</td><td>Main application data store — also used by PowerDNS, Postfix, Dovecot, and ProFTPd backends</td></tr>
+      <tr><td><strong>Database (accounts)</strong></td><td>MySQL 8 (separate schema)</td><td>Hosting account databases — isolated schema prefix per account (<code>{username}_</code>)</td></tr>
+      <tr><td><strong>Cache / queue</strong></td><td>Redis 7</td><td>Sessions, BullMQ backend, rate limit counters</td></tr>
+      <tr><td><strong>Job queue</strong></td><td>BullMQ</td><td>Async provisioning, backups, SSL renewal</td></tr>
+      <tr><td><strong>API backend</strong></td><td>Node.js 20 + Fastify</td><td>High I/O throughput for file operations</td></tr>
+      <tr><td><strong>Frontend</strong></td><td>React 18 + Vite</td><td>Fast builds; component-driven dashboard UI</td></tr>
+      <tr><td><strong>UI components</strong></td><td>shadcn/ui + Tailwind</td><td>Accessible, unstyled base; full customisation</td></tr>
+      <tr><td><strong>File manager</strong></td><td>Custom React + REST</td><td>No iframe dependencies; full control over UX</td></tr>
+      <tr><td><strong>Webmail</strong></td><td>Roundcube (iframe embed)</td><td>Proven, full-featured; not worth rebuilding</td></tr>
+      <tr><td><strong>phpMyAdmin</strong></td><td>phpMyAdmin + SSO token</td><td>DB management; SSO avoids separate login</td></tr>
+      <tr><td><strong>Containerisation</strong></td><td>Docker + Docker Compose</td><td>Dev environment; optional production deployment</td></tr>
+      <tr><td><strong>OS</strong></td><td>Ubuntu 22.04 LTS</td><td>Best package support for all daemons above</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S20 ─────────────────────── -->
+<section class="section" id="s20">
+  <div class="sec-hdr"><span class="sec-num">§ 20</span><h2>Implementation Roadmap</h2></div>
+
+  <div class="phase">
+    <div class="ph"><div class="ph-label">Phase 1</div><div class="ph-title">Server Foundation</div><div class="ph-days">Days 1–14</div></div>
+    <div class="ph"><div class="ph-label">Phase 2</div><div class="ph-title">Core Modules</div><div class="ph-days">Days 15–35</div></div>
+    <div class="ph"><div class="ph-label">Phase 3</div><div class="ph-title">Client UI</div><div class="ph-days">Days 36–50</div></div>
+    <div class="ph"><div class="ph-label">Phase 4</div><div class="ph-title">WHM + WHMCS</div><div class="ph-days">Days 51–65</div></div>
+    <div class="ph"><div class="ph-label">Phase 5</div><div class="ph-title">Hardening</div><div class="ph-days">Days 66–80</div></div>
+  </div>
+
+  <h3>Phase 1 — Server Foundation (Days 1–14)</h3>
+  <div class="steps">
+    <div class="step"><div class="sn">1</div><div class="sc"><h5>Server setup script</h5><p>Automated bash script to install Nginx, PHP-FPM (8.1/8.2/8.3), PowerDNS, Postfix, Dovecot, ProFTPd, MySQL 8, Redis on a fresh Ubuntu 22.04 server. Idempotent — safe to re-run.</p></div></div>
+    <div class="step"><div class="sn">2</div><div class="sc"><h5>Database schema + migrations</h5><p>All MySQL tables from §15. Use <code>db-migrate</code> or Prisma with the MySQL provider. Seed default server record, default plans (Starter/Business/Pro), admin user.</p></div></div>
+    <div class="step"><div class="sn">3</div><div class="sc"><h5>API skeleton</h5><p>Fastify app with JWT auth, RBAC middleware, Zod validation, error handler, health endpoint. Project structure: domain → application → infrastructure → presentation.</p></div></div>
+    <div class="step"><div class="sn">4</div><div class="sc"><h5>AccountService + provisioning job</h5><p>Create Linux user, set quota, write Nginx vhost, create DNS zone, create MySQL user, create ProFTPd virtual user. BullMQ worker with idempotency checks.</p></div></div>
+    <div class="step"><div class="sn">5</div><div class="sc"><h5>Privileged worker</h5><p>Unix socket server running as root. Strict command allowlist. HMAC-signed commands from API. All root operations go through here — never the API process itself.</p></div></div>
+  </div>
+
+  <h3>Phase 2 — Core Modules (Days 15–35)</h3>
+  <div class="steps">
+    <div class="step"><div class="sn">6</div><div class="sc"><h5>DNS module</h5><p>Full CRUD for DNS records via PowerDNS API. Zone creation on account provision. Ownership validation on record operations.</p></div></div>
+    <div class="step"><div class="sn">7</div><div class="sc"><h5>Email module</h5><p>Create/delete mailboxes (Postfix + Dovecot virtual users). Forwarders. Autoresponders. Spam filter toggle. DKIM key generation per domain.</p></div></div>
+    <div class="step"><div class="sn">8</div><div class="sc"><h5>Database module</h5><p>Create/drop MySQL databases and users. Assign privileges. phpMyAdmin SSO integration.</p></div></div>
+    <div class="step"><div class="sn">9</div><div class="sc"><h5>File manager API</h5><p>List, upload, download, edit, delete, rename, chmod, compress, extract. Path traversal protection. Zip slip protection on extract.</p></div></div>
+    <div class="step"><div class="sn">10</div><div class="sc"><h5>SSL module</h5><p>Let's Encrypt issuance via Certbot. Custom cert upload. Daily renewal cron. Nginx vhost SSL config update.</p></div></div>
+    <div class="step"><div class="sn">11</div><div class="sc"><h5>FTP module</h5><p>Create/delete/modify ProFTPd virtual users. Directory scoping. Quota setting.</p></div></div>
+    <div class="step"><div class="sn">12</div><div class="sc"><h5>Domain / subdomain module</h5><p>Addon domains, parked domains, subdomains, redirects. Each creates/removes Nginx vhost config.</p></div></div>
+    <div class="step"><div class="sn">13</div><div class="sc"><h5>Cron jobs</h5><p>Read/write per-account crontab using <code>crontab -u {username}</code>. Validate cron expression. Limit count per plan.</p></div></div>
+  </div>
+
+  <h3>Phase 3 — Client UI (Days 36–50)</h3>
+  <div class="steps">
+    <div class="step"><div class="sn">14</div><div class="sc"><h5>cPanel dashboard (React)</h5><p>Module icon grid. Usage summary (disk, bandwidth, email count). Quick stats. Responsive layout.</p></div></div>
+    <div class="step"><div class="sn">15</div><div class="sc"><h5>File manager UI</h5><p>Breadcrumb path, directory tree, file list, drag-and-drop upload, inline editor (CodeMirror), context menu (copy/paste/delete/chmod).</p></div></div>
+    <div class="step"><div class="sn">16</div><div class="sc"><h5>Email management UI</h5><p>Mailbox list + create form. Forwarder management. Password change. Quota usage bar per mailbox.</p></div></div>
+    <div class="step"><div class="sn">17</div><div class="sc"><h5>DNS zone editor UI</h5><p>Records table with inline edit. Record type selector with type-specific field validation. TTL picker.</p></div></div>
+    <div class="step"><div class="sn">18</div><div class="sc"><h5>Remaining module UIs</h5><p>MySQL (DB list + user list + assign matrix). FTP (account list + create). SSL (cert status + issue/upload forms). Subdomains/addon domains. Cron jobs.</p></div></div>
+  </div>
+
+  <h3>Phase 4 — WHM + WHMCS Integration (Days 51–65)</h3>
+  <div class="steps">
+    <div class="step"><div class="sn">19</div><div class="sc"><h5>WHM admin UI</h5><p>Account list with filters. Create account form. Suspend/unsuspend/terminate actions. Plan management. Server stats dashboard.</p></div></div>
+    <div class="step"><div class="sn">20</div><div class="sc"><h5>WHMCS-compatible API endpoints</h5><p>Implement the WHM API1/API2 subset that WHMCS calls for provisioning, suspension, termination, and usage queries. WHMCS can then use your panel out of the box.</p></div></div>
+    <div class="step"><div class="sn">21</div><div class="sc"><h5>Reseller system</h5><p>Resource quota inheritance (root → reseller → account). Reseller-scoped WHM UI. Reseller API keys.</p></div></div>
+  </div>
+
+  <h3>Phase 5 — Hardening (Days 66–80)</h3>
+  <div class="steps">
+    <div class="step"><div class="sn">22</div><div class="sc"><h5>Security audit</h5><p>Pen test all file manager paths. Verify privilege separation. Test SQL injection on all DB-facing endpoints. Rate limiting verification.</p></div></div>
+    <div class="step"><div class="sn">23</div><div class="sc"><h5>Monitoring + alerting</h5><p>Server metrics (CPU, RAM, disk) stored in MySQL every 5 min. Alerts on disk &gt;90%, MySQL down, Nginx down. Email alerts to admin.</p></div></div>
+    <div class="step"><div class="sn">24</div><div class="sc"><h5>Backup system</h5><p>Full account backup (homedir + DBs) to S3. Configurable retention (7/14/30 days). Restore flow. Backup status UI.</p></div></div>
+    <div class="step"><div class="sn">25</div><div class="sc"><h5>Bandwidth tracking</h5><p>Daily Nginx log parser job. Per-account MB aggregation into <code>bandwidth_logs</code>. Overage alerts. Auto-suspend option on overage.</p></div></div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ─────────────────────── S21 ─────────────────────── -->
+<section class="section" id="s21">
+  <div class="sec-hdr"><span class="sec-num">§ 21</span><h2>WHMCS Integration</h2></div>
+
+  <p>Your cPanel clone must integrate with WHMCS (your billing platform) so that when a client purchases a hosting plan, WHMCS automatically calls your panel's API to provision the account — no manual admin action required.</p>
+
+  <h3>Integration Architecture</h3>
+  <div class="dia">
+    <div class="mermaid">
+sequenceDiagram
+    participant Client as Client
+    participant WHMCS as WHMCS
+    participant Panel as Your cPanel Clone
+    participant Server as Linux Server
+
+    Client->>WHMCS: Pays for hosting plan
+    WHMCS->>WHMCS: Invoice marked paid
+    WHMCS->>Panel: POST /whm/createacct (username, domain, plan, password)
+    Panel->>Panel: Validate API key
+    Panel->>Server: Queue provisioning job
+    Server-->>Panel: Account created (async callback)
+    Panel-->>WHMCS: 200 OK {result: success}
+    WHMCS->>Client: Welcome email with cPanel login URL
+
+    Note over WHMCS,Panel: On termination
+    WHMCS->>Panel: POST /whm/terminateacct
+    Panel->>Server: Delete Linux user, remove vhosts, drop DBs
+    Panel-->>WHMCS: 200 OK
+    </div>
+  </div>
+
+  <h3>WHMCS Module Configuration</h3>
+  <p>In WHMCS, you configure your panel as a "cPanel" server under Setup → Products/Services → Servers. WHMCS needs:</p>
+  <div class="tw"><table>
+    <thead><tr><th>WHMCS Setting</th><th>Your Value</th></tr></thead>
+    <tbody>
+      <tr><td>Server Type</td><td>cPanel (built-in WHMCS module)</td></tr>
+      <tr><td>Hostname</td><td>Your panel's domain or IP</td></tr>
+      <tr><td>Port</td><td>2087 (WHM port)</td></tr>
+      <tr><td>Access Hash / API Token</td><td>API key generated in your WHM UI</td></tr>
+      <tr><td>Use SSL</td><td>Yes</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>WHM API Endpoint Implementation</h3>
+  <pre><code class="ts">// routers/whm.router.ts
+// These endpoints mimic cPanel's WHM API1 so WHMCS works without modification
+
+router.post('/json-api/createacct', whmAuth, async (req, res) =&gt; {
+  const { username, domain, password, plan, contactemail } = req.body;
+
+  try {
+    const job = await accountService.createAccount({
+      username, primaryDomain: domain, password,
+      email: contactemail, planName: plan,
+    });
+
+    return res.json({
+      result: [{
+        status: 1,
+        statusmsg: 'Account Creation OK',
+        options: { ip: serverIp, nameserver: 'ns1.yourserver.com', uid: job.systemUid }
+      }]
+    });
+  } catch (err) {
+    return res.json({ result: [{ status: 0, statusmsg: err.message }] });
+  }
+});
+
+router.post('/json-api/suspendacct', whmAuth, async (req, res) =&gt; {
+  const { user, reason } = req.body;
+  await accountService.suspendByUsername(user, reason);
+  res.json({ result: [{ status: 1, statusmsg: 'Account Suspended' }] });
+});
+
+router.post('/json-api/terminateacct', whmAuth, async (req, res) =&gt; {
+  const { user } = req.body;
+  await accountService.terminateByUsername(user);
+  res.json({ result: [{ status: 1, statusmsg: 'Account Termination Complete' }] });
+});
+
+router.get('/json-api/accountsummary', whmAuth, async (req, res) =&gt; {
+  const { user } = req.query;
+  const account = await accountService.findByUsername(user as string);
+  const usage   = await quotaService.getSummary(account.id);
+  res.json({ acct: [{ user, domain: account.primaryDomain, ...usage }] });
+});</code></pre>
+
+  <div class="call tip">
+    <span class="call-lbl">Integration Shortcut</span>
+    <p>Since your WHMCS billing platform (from the Quotations module work) already runs on Node.js + MySQL, you can add a native integration instead of using the WHM API compatibility layer. Have WHMCS call your panel's REST API directly with your own auth scheme — no legacy XML parsing needed. This is cleaner and more maintainable.</p>
+  </div>
+
+  <h3>Project Structure Summary</h3>
+  <pre><code class="text">cpanel-clone/
+├── packages/
+│   ├── api/                  # Fastify API server
+│   │   ├── src/
+│   │   │   ├── domain/
+│   │   │   │   ├── accounts/
+│   │   │   │   ├── dns/
+│   │   │   │   ├── email/
+│   │   │   │   ├── databases/
+│   │   │   │   ├── files/
+│   │   │   │   ├── ftp/
+│   │   │   │   ├── ssl/
+│   │   │   │   └── backups/
+│   │   │   ├── infrastructure/
+│   │   │   │   ├── nginx/       # NginxService
+│   │   │   │   ├── powerdns/    # DnsService
+│   │   │   │   ├── postfix/     # EmailService (SMTP)
+│   │   │   │   ├── dovecot/     # EmailService (IMAP)
+│   │   │   │   └── proftpd/     # FtpService
+│   │   │   ├── jobs/            # BullMQ workers
+│   │   │   ├── privileged/      # Root-privileged socket worker
+│   │   │   └── routers/         # REST routes + WHM compat
+│   │   └── package.json
+│   ├── cpanel-ui/            # React cPanel dashboard (port 2083)
+│   ├── whm-ui/               # React WHM dashboard (port 2087)
+│   └── webmail-ui/           # Roundcube embed wrapper (port 2096)
+├── scripts/
+│   ├── server-setup.sh       # Fresh server provisioning
+│   └── create-account.sh     # Manual account creation helper
+├── nginx/
+│   └── panel.conf            # Panel's own Nginx config
+├── docker-compose.dev.yml    # Dev environment
+└── package.json              # Monorepo root (pnpm workspaces)</code></pre>
+
+  <div style="height:2rem"></div>
+</section>
+
+</main>
+</div>
+
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    background: '#0e1a18',
+    primaryColor: '#1c2e2b',
+    primaryTextColor: '#d4ede8',
+    primaryBorderColor: 'rgba(80,200,160,0.2)',
+    lineColor: '#456560',
+    secondaryColor: '#152320',
+    tertiaryColor: '#0e1a18',
+    fontFamily: 'IBM Plex Mono, monospace',
+    fontSize: '12px',
+    edgeLabelBackground: '#0e1a18',
+    actorBkg: '#1c2e2b',
+    actorBorder: 'rgba(80,200,160,0.25)',
+    actorTextColor: '#d4ede8',
+    activationBorderColor: '#3ecf9c',
+    activationBkgColor: 'rgba(62,207,156,0.1)',
+    sequenceNumberColor: '#3ecf9c',
+    signalColor: '#3ecf9c',
+    signalTextColor: '#d4ede8',
+    noteBkgColor: '#1c2e2b',
+    noteBorderColor: 'rgba(80,200,160,0.2)',
+    noteTextColor: '#d4ede8',
+  }
+});
+
+// Sidebar active highlight
+const sections = document.querySelectorAll('.section');
+const links = document.querySelectorAll('.nav a');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const lk = document.querySelector(`.nav a[href="#${e.target.id}"]`);
+      if (lk) lk.classList.add('active');
+    }
+  });
+}, { rootMargin: '-15% 0px -70% 0px' });
+sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>
