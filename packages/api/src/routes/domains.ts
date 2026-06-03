@@ -56,10 +56,15 @@ export async function domainRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // 2. List Domains
+  // 2. List Domains — always includes the primary domain as the first entry
   fastify.get('/domains', async (request: any) => {
-    const domains = await db('domains').where({ account_id: request.accountId });
-    return domains;
+    const account = await db('accounts').where({ id: request.accountId }).first();
+    const addonDomains = await db('domains').where({ account_id: request.accountId });
+    const primaryEntry = account?.primary_domain
+      ? [{ id: `primary-${request.accountId}`, domain: account.primary_domain, document_root: `/home/${account.username}/public_html`, is_primary: true, account_id: request.accountId }]
+      : [];
+    const addonAlreadyHasPrimary = addonDomains.some((d: any) => d.domain === account?.primary_domain);
+    return addonAlreadyHasPrimary ? addonDomains : [...primaryEntry, ...addonDomains];
   });
 
   // 3. Delete Domain

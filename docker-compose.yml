@@ -1,0 +1,154 @@
+version: '3.8'
+
+services:
+  # ── Database ──────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: cpanel_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: cpanel_clone
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ── Cache ─────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: cpanel_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  # ── Mail Server (Postfix + Dovecot) ───────────────────────
+  # Equivalent to Exim + Dovecot that real cPanel runs.
+  # Handles: inbound SMTP (25), SMTP submission (587), IMAP (143/993).
+  # Accounts are provisioned by writing to the shared mail-config volume,
+  # which docker-mailserver reloads automatically.
+  mailserver:
+    image: docker.io/mailserver/docker-mailserver:latest
+    container_name: cpanel_mailserver
+    hostname: mail
+    domainname: cpanelclone.local
+    ports:
+      - "25:25"       # SMTP — inbound from internet
+      - "143:143"     # IMAP (plaintext/STARTTLS)
+      - "587:587"     # SMTP submission — outbound from clients
+      - "993:993"     # IMAPS (SSL)
+    volumes:
+      - maildata:/var/mail
+      - mailstate:/var/mail-state
+      - maillogs:/var/log/mail
+      - ./config/mail:/tmp/docker-mailserver   # account config files live here
+    environment:
+      - ENABLE_SPAMASSASSIN=0       # disable for dev (saves RAM)
+      - ENABLE_CLAMAV=0             # disable for dev (saves ~500MB RAM)
+      - ENABLE_FAIL2BAN=0
+      - ENABLE_POSTGREY=0
+      - ONE_DIR=1
+      - DMS_DEBUG=0
+      - SSL_TYPE=                   # no SSL in dev; set to letsencrypt in prod
+      - POSTFIX_INET_PROTOCOLS=ipv4
+      - PERMIT_DOCKER=network       # allow other containers to relay through us
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+
+  # ── Webmail (RoundCube) ───────────────────────────────────
+  # This is exactly what real cPanel ships — RoundCube on port 2096.
+  # cPanel's "Check Email" button opens RoundCube in an iframe.
+  roundcube:
+    image: roundcube/roundcubemail:latest
+    container_name: cpanel_roundcube
+    ports:
+      - "2096:80"     # Same port as real cPanel webmail
+    environment:
+      - ROUNDCUBEMAIL_DEFAULT_HOST=mailserver
+      - ROUNDCUBEMAIL_DEFAULT_PORT=143
+      - ROUNDCUBEMAIL_SMTP_SERVER=mailserver
+      - ROUNDCUBEMAIL_SMTP_PORT=587
+      - ROUNDCUBEMAIL_DB_TYPE=sqlite
+      - ROUNDCUBEMAIL_DB_DSN=sqlite:////var/roundcube/db/sqlite.db
+      - ROUNDCUBEMAIL_SKIN=elastic
+      - ROUNDCUBEMAIL_PLUGINS=archive,zipdownload
+    volumes:
+      - roundcube_db:/var/roundcube/db
+      - ./config/roundcube/custom.php:/var/roundcube/config/custom.php:ro
+    depends_on:
+      - mailserver
+    restart: unless-stopped
+
+  # ── API (Fastify) ─────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: cpanel_api
+    env_file: .env.docker
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount docker socket so the API can exec into cpanel_mailserver
+      # to provision email accounts — same as cPanel running system commands as root
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config/mail:/tmp/mail-config   # shared with mailserver for direct file writes
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  # ── Frontends served by nginx ─────────────────────────────
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    container_name: cpanel_nginx
+    ports:
+      - "2083:2083"   # cPanel UI
+      - "2087:2087"   # WHM UI
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # ── MailHog (dev SMTP catcher — keep for testing) ─────────
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: cpanel_mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    restart: unless-stopped
+
+  # ── phpMyAdmin (dev convenience) ──────────────────────────
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: cpanel_pma
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: rootpassword
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  redis_data:
+  maildata:
+  mailstate:
+  maillogs:
+  roundcube_db:

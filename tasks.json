@@ -1,0 +1,762 @@
+{
+  "project": "cPanel Clone",
+  "epics": [
+    {
+      "id": "EPIC-1",
+      "title": "Infrastructure & DevOps",
+      "description": "Project scaffold, Docker, database, authentication and all shared infrastructure"
+    },
+    {
+      "id": "EPIC-2",
+      "title": "cPanel Frontend",
+      "description": "All cPanel UI pages — sidebar navigation, dashboard, and every feature section"
+    },
+    {
+      "id": "EPIC-3",
+      "title": "cPanel API Backend",
+      "description": "All Fastify REST + WebSocket API routes powering the cPanel frontend"
+    },
+    {
+      "id": "EPIC-4",
+      "title": "WHM Panel",
+      "description": "WHM admin UI and API for hosting reseller / server management"
+    }
+  ],
+  "sprints": [
+    {
+      "id": "SPRINT-1",
+      "title": "Project Foundation",
+      "goal": "Monorepo, Docker, database, and auth working end-to-end",
+      "tasks": [
+        {
+          "id": "T-001",
+          "epic": "EPIC-1",
+          "title": "Monorepo Setup",
+          "description": "pnpm workspaces with packages: api, frontend, whm-ui, shared; TypeScript config",
+          "status": "done"
+        },
+        {
+          "id": "T-002",
+          "epic": "EPIC-1",
+          "title": "Docker — API Image",
+          "description": "Multi-stage Dockerfile.api: build (tsx compile) + runtime (Alpine, native modules)",
+          "status": "done"
+        },
+        {
+          "id": "T-003",
+          "epic": "EPIC-1",
+          "title": "Docker — nginx Image",
+          "description": "Dockerfile.nginx serving cPanel :2083 and WHM :2087 with API proxy",
+          "status": "done"
+        },
+        {
+          "id": "T-004",
+          "epic": "EPIC-1",
+          "title": "docker-compose Stack",
+          "description": "Orchestrates api, nginx, mysql, mailhog, mailserver, roundcube services",
+          "status": "done"
+        },
+        {
+          "id": "T-005",
+          "epic": "EPIC-1",
+          "title": "MySQL + Knex ORM",
+          "description": "DB connection pool, knexfile for dev/prod, migration runner",
+          "status": "done"
+        },
+        {
+          "id": "T-006",
+          "epic": "EPIC-1",
+          "title": "Initial DB Schema",
+          "description": "Migrations for: accounts, plans, servers, domains, email_accounts, ftp, mysql_dbs, dns_records, ssl_certs, cron_jobs",
+          "status": "done"
+        },
+        {
+          "id": "T-007",
+          "epic": "EPIC-1",
+          "title": "JWT Authentication",
+          "description": "bcrypt password hashing, @fastify/jwt token sign/verify, auth preHandler plugin",
+          "status": "done"
+        },
+        {
+          "id": "T-008",
+          "epic": "EPIC-1",
+          "title": "Dev Token Helper",
+          "description": "GET /dev-token returns a signed JWT for the first seeded user — frictionless local dev",
+          "status": "done"
+        },
+        {
+          "id": "T-009",
+          "epic": "EPIC-1",
+          "title": "Database Seeds",
+          "description": "Initial seed: admin account, test user, plans, server record for local dev",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": "SPRINT-2",
+      "title": "Core cPanel Pages",
+      "goal": "Login, sidebar navigation, dashboard and account info live",
+      "tasks": [
+        {
+          "id": "T-010",
+          "epic": "EPIC-2",
+          "title": "cPanel Login Page",
+          "description": "Username/password form, JWT stored in localStorage, redirect to dashboard",
+          "status": "done"
+        },
+        {
+          "id": "T-011",
+          "epic": "EPIC-2",
+          "title": "Sidebar Navigation",
+          "description": "Collapsible sidebar with 7 sections: Email, Files, Databases, Domains, Metrics, Security, Advanced",
+          "status": "done"
+        },
+        {
+          "id": "T-012",
+          "epic": "EPIC-2",
+          "title": "Dashboard Page",
+          "description": "Stat cards (email, DB, FTP, domains), disk usage bar, quick-link grid, server info panel",
+          "status": "done"
+        },
+        {
+          "id": "T-013",
+          "epic": "EPIC-3",
+          "title": "cPanel Login API",
+          "description": "POST /cpanel/login — validates credentials, returns signed JWT",
+          "status": "done"
+        },
+        {
+          "id": "T-014",
+          "epic": "EPIC-3",
+          "title": "Account Info API",
+          "description": "GET /cpanel/account/info — returns server IP, last login IP, records login event",
+          "status": "done"
+        },
+        {
+          "id": "T-015",
+          "epic": "EPIC-3",
+          "title": "Account Plan API",
+          "description": "GET /cpanel/account/plan — returns plan limits and current usage for the logged-in account",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": "SPRINT-3",
+      "title": "Email Section",
+      "goal": "Full email management: accounts, forwarders, routing, autoresponders and all sub-features",
+      "tasks": [
+        {
+          "id": "T-016",
+          "epic": "EPIC-1",
+          "title": "Email Features DB Schema",
+          "description": "Migrations: email_routing, autoresponders, filters, mailing_lists, subscribers, gpg_keys, spam_config, caldav_config, calendars, contacts",
+          "status": "done"
+        },
+        {
+          "id": "T-017",
+          "epic": "EPIC-2",
+          "title": "Email Accounts Page",
+          "description": "List, create, delete email accounts; shows quota; Webmail button opens RoundCube",
+          "status": "done"
+        },
+        {
+          "id": "T-018",
+          "epic": "EPIC-2",
+          "title": "Webmail Page",
+          "description": "Launch cards per email account; opens RoundCube at :2096 in new tab",
+          "status": "done"
+        },
+        {
+          "id": "T-019",
+          "epic": "EPIC-2",
+          "title": "Forwarders Page",
+          "description": "Add and delete email forwarders with source → destination mapping",
+          "status": "done"
+        },
+        {
+          "id": "T-020",
+          "epic": "EPIC-2",
+          "title": "Email Routing Page",
+          "description": "Set local / remote / backup MX routing mode per domain",
+          "status": "done"
+        },
+        {
+          "id": "T-021",
+          "epic": "EPIC-2",
+          "title": "Autoresponders Page",
+          "description": "Create/delete auto-reply rules with from-name, subject, body, interval",
+          "status": "done"
+        },
+        {
+          "id": "T-022",
+          "epic": "EPIC-2",
+          "title": "Default Address Page",
+          "description": "Configure catch-all action: discard, bounce, or forward to address",
+          "status": "done"
+        },
+        {
+          "id": "T-023",
+          "epic": "EPIC-2",
+          "title": "Mailing Lists Page",
+          "description": "Create/delete lists; manage subscribers with add/remove",
+          "status": "done"
+        },
+        {
+          "id": "T-024",
+          "epic": "EPIC-2",
+          "title": "Track Delivery Page",
+          "description": "Email delivery log showing sent messages, status, and recipient",
+          "status": "done"
+        },
+        {
+          "id": "T-025",
+          "epic": "EPIC-2",
+          "title": "Global Email Filters Page",
+          "description": "Server-wide filter rules with conditions (from/to/subject/body) and actions",
+          "status": "done"
+        },
+        {
+          "id": "T-026",
+          "epic": "EPIC-2",
+          "title": "Email Account Filters Page",
+          "description": "Per-account filter rules; same rule engine as global filters",
+          "status": "done"
+        },
+        {
+          "id": "T-027",
+          "epic": "EPIC-2",
+          "title": "Email Deliverability Page",
+          "description": "SPF, DKIM, DMARC status cards per domain with recommendations",
+          "status": "done"
+        },
+        {
+          "id": "T-028",
+          "epic": "EPIC-2",
+          "title": "Address Importer Page",
+          "description": "Bulk CSV import of email addresses into accounts or forwarders",
+          "status": "done"
+        },
+        {
+          "id": "T-029",
+          "epic": "EPIC-2",
+          "title": "Spam Filters Page",
+          "description": "SpamAssassin required score, auto-delete threshold, whitelist/blacklist",
+          "status": "done"
+        },
+        {
+          "id": "T-030",
+          "epic": "EPIC-2",
+          "title": "Encryption Page",
+          "description": "GPG key generation, list keys, delete keys per email account",
+          "status": "done"
+        },
+        {
+          "id": "T-031",
+          "epic": "EPIC-2",
+          "title": "BoxTrapper Page",
+          "description": "Challenge-response spam filter: enable/disable and configure per account",
+          "status": "done"
+        },
+        {
+          "id": "T-032",
+          "epic": "EPIC-2",
+          "title": "Calendars Config Page",
+          "description": "CalDAV server URL and credential settings",
+          "status": "done"
+        },
+        {
+          "id": "T-033",
+          "epic": "EPIC-2",
+          "title": "Calendars Sharing Page",
+          "description": "Share calendars with other users; read/write permission toggle",
+          "status": "done"
+        },
+        {
+          "id": "T-034",
+          "epic": "EPIC-2",
+          "title": "Calendars Management Page",
+          "description": "Create/edit/delete calendars and contacts (CalDAV + CardDAV)",
+          "status": "done"
+        },
+        {
+          "id": "T-035",
+          "epic": "EPIC-2",
+          "title": "Email Disk Usage Page",
+          "description": "Per-account storage stats showing MB used",
+          "status": "done"
+        },
+        {
+          "id": "T-036",
+          "epic": "EPIC-3",
+          "title": "Email Accounts API",
+          "description": "POST/GET/DELETE /cpanel/mail — CRUD with docker-mailserver sync",
+          "status": "done"
+        },
+        {
+          "id": "T-037",
+          "epic": "EPIC-3",
+          "title": "Forwarders API",
+          "description": "POST/GET/DELETE /cpanel/mail/forwarders",
+          "status": "done"
+        },
+        {
+          "id": "T-038",
+          "epic": "EPIC-3",
+          "title": "Email Routing API",
+          "description": "GET/POST /cpanel/mail/routing",
+          "status": "done"
+        },
+        {
+          "id": "T-039",
+          "epic": "EPIC-3",
+          "title": "Autoresponders API",
+          "description": "GET/POST/DELETE /cpanel/mail/autoresponders",
+          "status": "done"
+        },
+        {
+          "id": "T-040",
+          "epic": "EPIC-3",
+          "title": "Default Address API",
+          "description": "GET/POST /cpanel/email/default-address",
+          "status": "done"
+        },
+        {
+          "id": "T-041",
+          "epic": "EPIC-3",
+          "title": "Mailing Lists API",
+          "description": "Full CRUD for lists and subscribers under /cpanel/email/mailing-lists",
+          "status": "done"
+        },
+        {
+          "id": "T-042",
+          "epic": "EPIC-3",
+          "title": "Email Filters API",
+          "description": "GET/POST/PUT/DELETE /cpanel/email/filters — global and per-account scope",
+          "status": "done"
+        },
+        {
+          "id": "T-043",
+          "epic": "EPIC-3",
+          "title": "Address Importer API",
+          "description": "POST /cpanel/email/import — parses CSV, creates accounts/forwarders in bulk",
+          "status": "done"
+        },
+        {
+          "id": "T-044",
+          "epic": "EPIC-3",
+          "title": "BoxTrapper API",
+          "description": "GET/POST /cpanel/email/boxtrapper",
+          "status": "done"
+        },
+        {
+          "id": "T-045",
+          "epic": "EPIC-3",
+          "title": "GPG Keys API",
+          "description": "GET/POST/DELETE /cpanel/email/gpg-keys",
+          "status": "done"
+        },
+        {
+          "id": "T-046",
+          "epic": "EPIC-3",
+          "title": "Spam Filter API",
+          "description": "GET/POST /cpanel/email/spam-config — SpamAssassin settings",
+          "status": "done"
+        },
+        {
+          "id": "T-047",
+          "epic": "EPIC-3",
+          "title": "Track Delivery API",
+          "description": "GET /cpanel/email/delivery-log — paginated delivery log",
+          "status": "done"
+        },
+        {
+          "id": "T-048",
+          "epic": "EPIC-3",
+          "title": "Email Deliverability API",
+          "description": "GET /cpanel/email/deliverability — SPF/DKIM/DMARC check per domain",
+          "status": "done"
+        },
+        {
+          "id": "T-049",
+          "epic": "EPIC-3",
+          "title": "Email Disk Usage API",
+          "description": "GET /cpanel/email/disk-usage — per-account storage totals",
+          "status": "done"
+        },
+        {
+          "id": "T-050",
+          "epic": "EPIC-3",
+          "title": "CalDAV / Contacts API",
+          "description": "Full CRUD for caldav_config, calendars, contacts under /cpanel/caldav",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": "SPRINT-4",
+      "title": "Mail Infrastructure",
+      "goal": "Real SMTP sending, MailHog dev catcher, docker-mailserver + RoundCube",
+      "tasks": [
+        {
+          "id": "T-051",
+          "epic": "EPIC-1",
+          "title": "MailHog Dev SMTP",
+          "description": "MailHog container: SMTP :1025, web UI :8025 — catches all outbound email in dev",
+          "status": "done"
+        },
+        {
+          "id": "T-052",
+          "epic": "EPIC-1",
+          "title": "docker-mailserver Container",
+          "description": "Postfix + Dovecot all-in-one: SMTP :25/:587, IMAP :143/:993",
+          "status": "done"
+        },
+        {
+          "id": "T-053",
+          "epic": "EPIC-1",
+          "title": "RoundCube Webmail",
+          "description": "RoundCube container on :2096, connected to docker-mailserver Dovecot",
+          "status": "done"
+        },
+        {
+          "id": "T-054",
+          "epic": "EPIC-3",
+          "title": "SMTP Sending API",
+          "description": "POST /cpanel/mail/send — nodemailer, supports MailHog dev / SendGrid / SES in prod",
+          "status": "done"
+        },
+        {
+          "id": "T-055",
+          "epic": "EPIC-3",
+          "title": "SMTP Config + Test API",
+          "description": "GET /cpanel/mail/smtp-config, POST /cpanel/mail/test-smtp",
+          "status": "done"
+        },
+        {
+          "id": "T-056",
+          "epic": "EPIC-3",
+          "title": "docker-mailserver Integration Service",
+          "description": "mailserver.ts service: addAccount/deleteAccount/updatePassword/syncAccounts via Docker exec (dockerode)",
+          "status": "done"
+        },
+        {
+          "id": "T-057",
+          "epic": "EPIC-3",
+          "title": "Admin Mail Sync API",
+          "description": "POST /admin/mail/sync — syncs all DB email accounts to docker-mailserver",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": "SPRINT-5",
+      "title": "Files & Databases",
+      "goal": "File Manager, WordPress Toolkit, MySQL, FTP and Backups complete",
+      "tasks": [
+        {
+          "id": "T-058",
+          "epic": "EPIC-2",
+          "title": "File Manager Page",
+          "description": "Browse directories, create/edit/delete files and folders, chmod, copy, move, rename, download",
+          "status": "done"
+        },
+        {
+          "id": "T-059",
+          "epic": "EPIC-2",
+          "title": "WordPress Toolkit Page",
+          "description": "Install WordPress into a domain path, list installations, uninstall",
+          "status": "done"
+        },
+        {
+          "id": "T-060",
+          "epic": "EPIC-2",
+          "title": "Images Page",
+          "description": "List images in public_html, resize by pixel width with preview",
+          "status": "done"
+        },
+        {
+          "id": "T-061",
+          "epic": "EPIC-2",
+          "title": "Disk Usage Page",
+          "description": "Storage breakdown by directory with visual usage bar",
+          "status": "done"
+        },
+        {
+          "id": "T-062",
+          "epic": "EPIC-2",
+          "title": "FTP Accounts Page",
+          "description": "Create FTP user with directory and quota, list, delete",
+          "status": "done"
+        },
+        {
+          "id": "T-063",
+          "epic": "EPIC-2",
+          "title": "Backups Page",
+          "description": "Create full backup (tar.gz), list with size/date, download link, delete",
+          "status": "done"
+        },
+        {
+          "id": "T-064",
+          "epic": "EPIC-2",
+          "title": "MySQL Databases Page",
+          "description": "Create/delete databases, create/delete users, assign user privileges to DB",
+          "status": "done"
+        },
+        {
+          "id": "T-065",
+          "epic": "EPIC-2",
+          "title": "phpMyAdmin Page",
+          "description": "Embedded link that opens phpMyAdmin for the account's databases",
+          "status": "done"
+        },
+        {
+          "id": "T-066",
+          "epic": "EPIC-3",
+          "title": "File Manager API",
+          "description": "GET list/read/download; POST create/write/delete/copy/move/chmod/rename; all scoped to account home dir",
+          "status": "done"
+        },
+        {
+          "id": "T-067",
+          "epic": "EPIC-3",
+          "title": "WordPress Toolkit API",
+          "description": "GET installations; POST /wordpress/install (download + configure WP); POST /wordpress/uninstall",
+          "status": "done"
+        },
+        {
+          "id": "T-068",
+          "epic": "EPIC-3",
+          "title": "WordPress DB Schema",
+          "description": "Migration for wordpress_installations table",
+          "status": "done"
+        },
+        {
+          "id": "T-069",
+          "epic": "EPIC-3",
+          "title": "Images API",
+          "description": "GET /cpanel/images/list; POST /cpanel/images/resize (Sharp)",
+          "status": "done"
+        },
+        {
+          "id": "T-070",
+          "epic": "EPIC-3",
+          "title": "Disk Usage API",
+          "description": "GET /cpanel/metrics/disk-usage — directory tree with sizes",
+          "status": "done"
+        },
+        {
+          "id": "T-071",
+          "epic": "EPIC-3",
+          "title": "FTP Accounts API",
+          "description": "POST/GET/DELETE /cpanel/ftp",
+          "status": "done"
+        },
+        {
+          "id": "T-072",
+          "epic": "EPIC-3",
+          "title": "Backups API",
+          "description": "POST/GET/DELETE /cpanel/backups — tar.gz creation to backups directory",
+          "status": "done"
+        },
+        {
+          "id": "T-073",
+          "epic": "EPIC-3",
+          "title": "MySQL API",
+          "description": "POST/GET/DELETE for databases and users; POST /cpanel/mysql/assign for privileges",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": "SPRINT-6",
+      "title": "Domains, Metrics & Security",
+      "goal": "Addon domains, redirects, DNS, SSL, visitors and bandwidth working",
+      "tasks": [
+        {
+          "id": "T-074",
+          "epic": "EPIC-2",
+          "title": "Addon Domains Page",
+          "description": "Add addon domain with document root, list, delete",
+          "status": "done"
+        },
+        {
+          "id": "T-075",
+          "epic": "EPIC-2",
+          "title": "Redirects Page",
+          "description": "Add 301/302 URL redirects, list active redirects, delete",
+          "status": "done"
+        },
+        {
+          "id": "T-076",
+          "epic": "EPIC-2",
+          "title": "DNS Zone Editor Page",
+          "description": "View all DNS records per domain, add A/CNAME/MX/TXT records, delete",
+          "status": "done"
+        },
+        {
+          "id": "T-077",
+          "epic": "EPIC-2",
+          "title": "Visitors Page",
+          "description": "Raw access log analytics: page views, unique IPs, recent requests",
+          "status": "done"
+        },
+        {
+          "id": "T-078",
+          "epic": "EPIC-2",
+          "title": "Bandwidth Page",
+          "description": "Monthly transfer usage chart per domain",
+          "status": "done"
+        },
+        {
+          "id": "T-079",
+          "epic": "EPIC-2",
+          "title": "SSL/TLS Page",
+          "description": "Install certificate, toggle autorenew, delete SSL per domain",
+          "status": "done"
+        },
+        {
+          "id": "T-080",
+          "epic": "EPIC-3",
+          "title": "Domains API",
+          "description": "POST/GET/DELETE /cpanel/domains; POST/GET/DELETE /cpanel/domains/redirects",
+          "status": "done"
+        },
+        {
+          "id": "T-081",
+          "epic": "EPIC-3",
+          "title": "DNS Zone API",
+          "description": "GET /cpanel/dns/:domain; POST add record; DELETE /cpanel/dns/:domain/:recordId",
+          "status": "done"
+        },
+        {
+          "id": "T-082",
+          "epic": "EPIC-3",
+          "title": "Visitors & Bandwidth API",
+          "description": "GET /cpanel/metrics/visitors and /cpanel/metrics/bandwidth",
+          "status": "done"
+        },
+        {
+          "id": "T-083",
+          "epic": "EPIC-3",
+          "title": "SSL/TLS API",
+          "description": "POST install, GET list, PUT autorenew toggle, DELETE /cpanel/ssl",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": "SPRINT-7",
+      "title": "Terminal & Cron",
+      "goal": "Real PTY-backed SSH terminal and cron job management live",
+      "tasks": [
+        {
+          "id": "T-084",
+          "epic": "EPIC-1",
+          "title": "WebSocket Support",
+          "description": "@fastify/websocket registered in app; nginx map $http_upgrade for upgrade proxying",
+          "status": "done"
+        },
+        {
+          "id": "T-085",
+          "epic": "EPIC-1",
+          "title": "node-pty Setup",
+          "description": "node-pty native addon; rebuilt for Node.js v25; postinstall rebuild in root package.json",
+          "status": "done"
+        },
+        {
+          "id": "T-086",
+          "epic": "EPIC-2",
+          "title": "SSH Terminal Page",
+          "description": "xterm.js terminal (GitHub dark theme, FitAddon, WebLinksAddon); macOS toolbar; reconnect button",
+          "status": "done"
+        },
+        {
+          "id": "T-087",
+          "epic": "EPIC-3",
+          "title": "Terminal WebSocket API",
+          "description": "GET /cpanel/terminal/ws — JWT via query param, spawns /bin/sh via node-pty, bridges PTY ↔ WebSocket",
+          "status": "done"
+        },
+        {
+          "id": "T-088",
+          "epic": "EPIC-2",
+          "title": "Cron Jobs Page",
+          "description": "Add cron schedule with command and cron expression, list jobs, delete",
+          "status": "done"
+        },
+        {
+          "id": "T-089",
+          "epic": "EPIC-3",
+          "title": "Cron Jobs API",
+          "description": "GET/POST/DELETE /cpanel/cron — stores and manages cron expressions",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": "SPRINT-8",
+      "title": "WHM Panel",
+      "goal": "Full WHM admin panel: account management, plans, service monitoring",
+      "tasks": [
+        {
+          "id": "T-090",
+          "epic": "EPIC-4",
+          "title": "WHM Login",
+          "description": "Admin-only login form; POST /whm/login returns WHM JWT",
+          "status": "done"
+        },
+        {
+          "id": "T-091",
+          "epic": "EPIC-4",
+          "title": "WHM Dashboard",
+          "description": "Overview stats: total accounts, active, suspended, server load",
+          "status": "done"
+        },
+        {
+          "id": "T-092",
+          "epic": "EPIC-4",
+          "title": "WHM Account Management",
+          "description": "List all accounts, create, suspend, unsuspend, terminate, change plan, change password",
+          "status": "done"
+        },
+        {
+          "id": "T-093",
+          "epic": "EPIC-4",
+          "title": "WHM Account Detail",
+          "description": "View individual account details: plan, usage, domain, status",
+          "status": "done"
+        },
+        {
+          "id": "T-094",
+          "epic": "EPIC-4",
+          "title": "WHM Plans Management",
+          "description": "Create/edit/delete hosting plans with resource limits; enable/disable toggle",
+          "status": "done"
+        },
+        {
+          "id": "T-095",
+          "epic": "EPIC-4",
+          "title": "WHM Service Status",
+          "description": "Live health cards for MySQL, API, mail server",
+          "status": "done"
+        },
+        {
+          "id": "T-096",
+          "epic": "EPIC-4",
+          "title": "WHM Activity Log",
+          "description": "Feed of recent account events: created, suspended, plan changed, etc.",
+          "status": "done"
+        },
+        {
+          "id": "T-097",
+          "epic": "EPIC-4",
+          "title": "WHM JSON API",
+          "description": "cPanel-compatible endpoints: createacct, suspendacct, unsuspendacct, terminateacct, accountsummary",
+          "status": "done"
+        }
+      ]
+    }
+  ]
+}

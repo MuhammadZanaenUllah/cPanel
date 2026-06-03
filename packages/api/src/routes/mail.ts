@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { db } from '../db/connection';
 import { MailService } from '../services/mail';
+import { MailServerService } from '../services/mailserver';
 
 async function cpanelAuth(request: any, reply: any) {
   try {
@@ -23,12 +24,17 @@ export async function mailRoutes(fastify: FastifyInstance) {
     const { localPart, domain, password, quotaMb } = request.body;
     const accountId = request.accountId;
 
-    // Check domain ownership first
+    // Check domain ownership — addon domain table OR the account's primary domain
     const domainRecord = await db('domains').where({ account_id: accountId, domain }).first();
-    if (!domainRecord) return reply.code(403).send({ error: 'Unauthorized domain' });
+    const accountRecord = !domainRecord ? await db('accounts').where({ id: accountId, primary_domain: domain }).first() : null;
+    if (!domainRecord && !accountRecord) return reply.code(403).send({ error: 'Unauthorized domain' });
 
     try {
       await MailService.createEmailAccount(accountId, localPart, domain, password, quotaMb);
+      // Provision the account in Postfix + Dovecot (same as cPanel updating Exim/Dovecot configs)
+      await MailServerService.addAccount(`${localPart}@${domain}`, password).catch(e =>
+        fastify.log.warn(e, 'mail server provisioning failed — DB record saved, mail server may be offline')
+      );
       reply.code(201).send({ success: true, email: `${localPart}@${domain}` });
     } catch (err: any) {
       reply.code(400).send({ error: err.message });
@@ -60,6 +66,10 @@ export async function mailRoutes(fastify: FastifyInstance) {
 
     try {
       await MailService.deleteEmailAccount(accountId, localPart, domain);
+      // Remove from Postfix + Dovecot
+      await MailServerService.deleteAccount(`${localPart}@${domain}`).catch(e =>
+        fastify.log.warn(e, 'mail server deprovisioning failed — DB record deleted, mail server may be offline')
+      );
       return { success: true, message: 'Email account deleted successfully' };
     } catch (err: any) {
       reply.code(500).send({ error: err.message });
@@ -118,7 +128,8 @@ export async function mailRoutes(fastify: FastifyInstance) {
     }
 
     const domainRecord = await db('domains').where({ account_id: accountId, domain }).first();
-    if (!domainRecord) {
+    const accountRecord2 = !domainRecord ? await db('accounts').where({ id: accountId, primary_domain: domain }).first() : null;
+    if (!domainRecord && !accountRecord2) {
       return reply.code(403).send({ error: 'Unauthorized domain' });
     }
 

@@ -3,10 +3,9 @@ import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
 
 export async function seed(knex: Knex): Promise<void> {
-  // Deletes ALL existing entries
-  await knex('accounts').del();
-  await knex('servers').del();
-  await knex('plans').del();
+  // Skip seeding if data already exists — prevents UUID churn on restarts
+  const existingServer = await knex('servers').first();
+  if (existingServer) return;
 
   const serverId = randomUUID();
   const planIds = [randomUUID(), randomUUID(), randomUUID()];

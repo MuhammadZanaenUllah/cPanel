@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { resolveSafe } from '@cpanel/shared/src/utils/fs';
+import { resolveSafe } from '@cpanel/shared/dist/utils/fs';
 import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
@@ -39,6 +39,15 @@ export async function filesRoutes(fastify: FastifyInstance) {
       fs.writeFileSync(path.join(pubHtml, 'index.html'), '<h1>Welcome to your new cPanel website!</h1>');
       fs.writeFileSync(path.join(pubHtml, 'styles.css'), 'body { font-family: sans-serif; }');
     }
+
+    const folders = ['etc', 'mail', 'tmp'];
+    for (const f of folders) {
+      const folderPath = path.join(userHome, f);
+      if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath, { recursive: true });
+      }
+    }
+
     return userHome;
   };
 
@@ -62,7 +71,8 @@ export async function filesRoutes(fastify: FastifyInstance) {
           isDirectory: file.isDirectory(),
           size: stats.size,
           updatedAt: stats.mtime.toISOString(),
-          relPath: path.relative(userHome, fullPath)
+          relPath: path.relative(userHome, fullPath),
+          permissions: '0' + (stats.mode & 0o777).toString(8)
         };
       });
 
@@ -165,6 +175,163 @@ export async function filesRoutes(fastify: FastifyInstance) {
       return { output: stdout || stderr || 'Command completed with no output' };
     } catch (err: any) {
       return { output: err.stderr || err.message };
+    }
+  });
+
+  // 6. Read File Content
+  fastify.get('/files/read', async (request: any, reply) => {
+    const { relPath } = request.query;
+    const userHome = getUserHome(request.username);
+
+    try {
+      const targetFile = resolveSafe(userHome, relPath);
+      if (!fs.existsSync(targetFile)) {
+        return reply.code(404).send({ error: 'File not found' });
+      }
+      const stats = fs.statSync(targetFile);
+      if (stats.isDirectory()) {
+        return reply.code(400).send({ error: 'Cannot read directory' });
+      }
+      const content = fs.readFileSync(targetFile, 'utf8');
+      return { content };
+    } catch (err: any) {
+      reply.code(400).send({ error: err.message });
+    }
+  });
+
+  // 7. Download File
+  fastify.get('/files/download', async (request: any, reply) => {
+    const { relPath } = request.query;
+    const userHome = getUserHome(request.username);
+
+    try {
+      const targetFile = resolveSafe(userHome, relPath);
+      if (!fs.existsSync(targetFile)) {
+        return reply.code(404).send({ error: 'File not found' });
+      }
+      const stats = fs.statSync(targetFile);
+      if (stats.isDirectory()) {
+        return reply.code(400).send({ error: 'Cannot download directory' });
+      }
+      const filename = path.basename(targetFile);
+      const stream = fs.createReadStream(targetFile);
+      reply.header('Content-Disposition', `attachment; filename="${filename}"`);
+      reply.header('Content-Type', 'application/octet-stream');
+      return reply.send(stream);
+    } catch (err: any) {
+      reply.code(400).send({ error: err.message });
+    }
+  });
+
+  // 8. Copy File or Folder
+  fastify.post('/files/copy', async (request: any, reply) => {
+    const { relPath, destRelPath } = request.body;
+    const userHome = getUserHome(request.username);
+
+    try {
+      const sourcePath = resolveSafe(userHome, relPath);
+      const destPath = resolveSafe(userHome, destRelPath);
+
+      if (!fs.existsSync(sourcePath)) {
+        return reply.code(404).send({ error: 'Source not found' });
+      }
+
+      if (destPath.startsWith(sourcePath)) {
+        return reply.code(400).send({ error: 'Cannot copy a folder inside itself' });
+      }
+
+      const destParent = path.dirname(destPath);
+      if (!fs.existsSync(destParent)) {
+        fs.mkdirSync(destParent, { recursive: true });
+      }
+
+      const stats = fs.statSync(sourcePath);
+      if (stats.isDirectory()) {
+        fs.cpSync(sourcePath, destPath, { recursive: true });
+      } else {
+        fs.copyFileSync(sourcePath, destPath);
+      }
+
+      return { success: true, message: 'Copied successfully' };
+    } catch (err: any) {
+      reply.code(400).send({ error: err.message });
+    }
+  });
+
+  // 9. Move File or Folder
+  fastify.post('/files/move', async (request: any, reply) => {
+    const { relPath, destRelPath } = request.body;
+    const userHome = getUserHome(request.username);
+
+    try {
+      const sourcePath = resolveSafe(userHome, relPath);
+      const destPath = resolveSafe(userHome, destRelPath);
+
+      if (!fs.existsSync(sourcePath)) {
+        return reply.code(404).send({ error: 'Source not found' });
+      }
+
+      if (destPath.startsWith(sourcePath)) {
+        return reply.code(400).send({ error: 'Cannot move a folder inside itself' });
+      }
+
+      const destParent = path.dirname(destPath);
+      if (!fs.existsSync(destParent)) {
+        fs.mkdirSync(destParent, { recursive: true });
+      }
+
+      fs.renameSync(sourcePath, destPath);
+      return { success: true, message: 'Moved successfully' };
+    } catch (err: any) {
+      reply.code(400).send({ error: err.message });
+    }
+  });
+
+  // 10. Chmod / Permissions
+  fastify.post('/files/chmod', async (request: any, reply) => {
+    const { relPath, mode } = request.body;
+    const userHome = getUserHome(request.username);
+
+    try {
+      const targetPath = resolveSafe(userHome, relPath);
+      if (!fs.existsSync(targetPath)) {
+        return reply.code(404).send({ error: 'File or directory not found' });
+      }
+
+      const octalMode = parseInt(mode, 8);
+      if (isNaN(octalMode)) {
+        return reply.code(400).send({ error: 'Invalid permission mode' });
+      }
+
+      fs.chmodSync(targetPath, octalMode);
+      return { success: true, message: 'Permissions updated successfully' };
+    } catch (err: any) {
+      reply.code(400).send({ error: err.message });
+    }
+  });
+
+  // 11. Rename File or Folder
+  fastify.post('/files/rename', async (request: any, reply) => {
+    const { relPath, newName } = request.body;
+    const userHome = getUserHome(request.username);
+
+    try {
+      const sourcePath = resolveSafe(userHome, relPath);
+      if (!fs.existsSync(sourcePath)) {
+        return reply.code(404).send({ error: 'Source file or folder not found' });
+      }
+
+      const parentDir = path.dirname(sourcePath);
+      const destPath = resolveSafe(parentDir, newName);
+
+      if (fs.existsSync(destPath)) {
+        return reply.code(400).send({ error: 'A file or folder with that name already exists' });
+      }
+
+      fs.renameSync(sourcePath, destPath);
+      return { success: true, message: 'Renamed successfully' };
+    } catch (err: any) {
+      reply.code(400).send({ error: err.message });
     }
   });
 }

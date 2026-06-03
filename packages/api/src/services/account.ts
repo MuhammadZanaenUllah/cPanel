@@ -23,6 +23,15 @@ export class AccountService {
     const plan = await db('plans').where({ id: data.planId }).first();
     if (!plan) throw new Error('Plan not found');
 
+    // Resolve 'auto' or any non-UUID server id to the first available server
+    let resolvedServerId = data.serverId;
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidPattern.test(resolvedServerId)) {
+      const server = await db('servers').first();
+      if (!server) throw new Error('No servers configured');
+      resolvedServerId = server.id;
+    }
+
     // Find next UID/GID starting from 1000
     const lastAccount = await db('accounts').orderBy('system_uid', 'desc').first();
     const systemUid = lastAccount ? lastAccount.system_uid + 1 : 1000;
@@ -35,7 +44,7 @@ export class AccountService {
 
     await db('accounts').insert({
       id: accountId,
-      server_id: data.serverId,
+      server_id: resolvedServerId,
       plan_id: data.planId,
       reseller_id: data.resellerId || null,
       username: data.username,

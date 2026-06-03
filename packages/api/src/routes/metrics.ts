@@ -245,6 +245,38 @@ export async function metricsRoutes(fastify: FastifyInstance) {
     });
   });
 
+  // 4b. Account plan limits + current usage counts
+  fastify.get('/account/plan', async (request: any) => {
+    const accountId = request.accountId;
+    const account = await db('accounts').where({ id: accountId }).first();
+    if (!account) return { error: 'Account not found' };
+    const plan = account.plan_id ? await db('plans').where({ id: account.plan_id }).first() : null;
+    const [emailC, dbC, ftpC, domainC] = await Promise.all([
+      db('email_accounts').where({ account_id: accountId }).count('id as c').first(),
+      db('mysql_databases').where({ account_id: accountId }).count('id as c').first(),
+      db('ftp_accounts').where({ account_id: accountId }).count('id as c').first(),
+      db('domains').where({ account_id: accountId }).count('id as c').first(),
+    ]);
+    const unlimited = (v: number) => v >= 9999 ? null : v;
+    return {
+      plan: plan ? {
+        name: plan.name,
+        disk_mb: plan.disk_mb,
+        bandwidth_mb: plan.bandwidth_mb,
+        max_email_accounts: unlimited(plan.max_email_accounts),
+        max_databases: unlimited(plan.max_databases),
+        max_ftp_accounts: unlimited(plan.max_ftp_accounts),
+        max_addon_domains: unlimited(plan.max_addon_domains),
+      } : null,
+      usage: {
+        email_accounts: parseInt((emailC?.c as string) || '0'),
+        databases: parseInt((dbC?.c as string) || '0'),
+        ftp_accounts: parseInt((ftpC?.c as string) || '0'),
+        addon_domains: parseInt((domainC?.c as string) || '0'),
+      }
+    };
+  });
+
   // 4. Image tools: list images in workspace
   fastify.get('/images/list', async (request: any) => {
     const account = await db('accounts').where({ id: request.accountId }).first();

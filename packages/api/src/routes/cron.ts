@@ -15,7 +15,8 @@ async function cpanelAuth(request: any, reply: any) {
 }
 
 function isValidCronField(value: string): boolean {
-  return /^(\*|[0-9,\-\/]+)$/.test(value);
+  // Supports: * | */n | n | n-m | n,m | n-m/n | combinations
+  return /^(\*|(\*|\d+(-\d+)?)(\/\d+)?)(,(\*|\d+(-\d+)?)(\/\d+)?)*$/.test(value);
 }
 
 export async function cronRoutes(fastify: FastifyInstance) {

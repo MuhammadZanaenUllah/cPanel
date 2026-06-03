@@ -7,10 +7,19 @@ const SECRET = process.env.PRIVILEGED_WORKER_SECRET || 'dev-secret';
 
 export function sendPrivilegedCommand(command: string, args: any): Promise<any> {
   return new Promise((resolve, reject) => {
-    const socket = net.createConnection(getSocketPath());
+    const socketPath = getSocketPath();
+
+    // In dev/Docker the worker socket won't exist — skip gracefully
+    const fs = require('fs');
+    if (!fs.existsSync(socketPath)) {
+      console.warn(`[privileged] socket not found (${socketPath}), skipping "${command}" in dev mode`);
+      return resolve({ dev_mode: true });
+    }
+
+    const socket = net.createConnection(socketPath);
     const timestamp = Date.now();
     const signature = signCommand(command, args, timestamp, SECRET);
-    
+
     const payload = JSON.stringify({ command, args, signature, timestamp }) + '\n';
     socket.write(payload);
 

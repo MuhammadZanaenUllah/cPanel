@@ -1,0 +1,55 @@
+FROM node:20-alpine AS builder
+
+# Build tools for node-pty native compilation (C++ PTY bindings)
+RUN apk add --no-cache python3 make g++
+
+RUN npm install -g pnpm@10
+
+WORKDIR /app
+
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/api/package.json    ./packages/api/
+
+# Install ALL deps including native build scripts
+RUN pnpm install --frozen-lockfile
+
+# Copy sources and build TypeScript
+COPY tsconfig.json ./
+COPY packages/shared ./packages/shared
+COPY packages/api    ./packages/api
+
+RUN pnpm --filter @cpanel/shared build
+RUN pnpm --filter api build
+
+# ---- Runtime image ----
+FROM node:20-alpine
+
+# libstdc++ is required at runtime for node-pty's compiled .node addon
+RUN apk add --no-cache netcat-openbsd libstdc++ python3 make g++
+
+RUN npm install -g pnpm@10
+
+WORKDIR /app
+
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/api/package.json    ./packages/api/
+
+# Install prod deps — node-pty will recompile here with the build tools present
+RUN pnpm install --frozen-lockfile --prod
+
+# Remove build tools (compiled .node file stays, tools not needed at runtime)
+RUN apk del python3 make g++
+
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder /app/packages/api/dist    ./packages/api/dist
+
+COPY scripts/docker-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+WORKDIR /app/packages/api
+
+EXPOSE 3000
+
+ENTRYPOINT ["/entrypoint.sh"]

@@ -419,6 +419,25 @@ body {
   z-index: 1000;
 }
 
+/* Page mode: renders modal content as an inline card without overlay */
+.page-card-wrapper {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  overflow: hidden;
+  width: 100%;
+}
+.page-card-wrapper .modal-content {
+  width: 100% !important;
+  max-width: 100% !important;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+}
+.page-card-wrapper .modal-header {
+  border-radius: 0;
+}
+
 .modal-content {
   background-color: #ffffff;
   border-radius: 3px;

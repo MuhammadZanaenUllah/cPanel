@@ -1,0 +1,289 @@
+{
+  "info": {
+    "_postman_id": "cpanel-clone-api-collection",
+    "name": "cPanel Clone API",
+    "description": "Postman Collection for cPanel Clone Backend REST API endpoints, covering authentication, files management, databases, and the WordPress Toolkit.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "File Manager",
+      "item": [
+        {
+          "name": "List Files",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base}}/cpanel/files/list?relPath=public_html",
+              "host": [
+                "{{api_base}}"
+              ],
+              "path": [
+                "cpanel",
+                "files",
+                "list"
+              ],
+              "query": [
+                {
+                  "key": "relPath",
+                  "value": "public_html"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create File / Folder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"relPath\": \"public_html\",\n  \"name\": \"newfile.html\",\n  \"isDirectory\": false\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/cpanel/files/create",
+              "host": [
+                "{{api_base}}"
+              ],
+              "path": [
+                "cpanel",
+                "files",
+                "create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Read File Content",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base}}/cpanel/files/read?relPath=public_html/index.html",
+              "host": [
+                "{{api_base}}"
+              ],
+              "path": [
+                "cpanel",
+                "files",
+                "read"
+              ],
+              "query": [
+                {
+                  "key": "relPath",
+                  "value": "public_html/index.html"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Save File Content",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"relPath\": \"public_html/index.html\",\n  \"content\": \"<h1>My New Page</h1>\"\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/cpanel/files/write",
+              "host": [
+                "{{api_base}}"
+              ],
+              "path": [
+                "cpanel",
+                "files",
+                "write"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change Permissions (Chmod)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"relPath\": \"public_html/index.html\",\n  \"mode\": \"0755\"\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/cpanel/files/chmod",
+              "host": [
+                "{{api_base}}"
+              ],
+              "path": [
+                "cpanel",
+                "files",
+                "chmod"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "WordPress Toolkit",
+      "item": [
+        {
+          "name": "List Installations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base}}/cpanel/wordpress/installations",
+              "host": [
+                "{{api_base}}"
+              ],
+              "path": [
+                "cpanel",
+                "wordpress",
+                "installations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Install WordPress",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"domain\": \"zanaen.com\",\n  \"installDir\": \"\",\n  \"siteTitle\": \"My Blog Site\",\n  \"adminUser\": \"admin\",\n  \"adminPass\": \"admin123\",\n  \"adminEmail\": \"admin@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/cpanel/wordpress/install",
+              "host": [
+                "{{api_base}}"
+              ],
+              "path": [
+                "cpanel",
+                "wordpress",
+                "install"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Uninstall WordPress",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"YOUR_WP_INSTALLATION_UUID\"\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/cpanel/wordpress/uninstall",
+              "host": [
+                "{{api_base}}"
+              ],
+              "path": [
+                "cpanel",
+                "wordpress",
+                "uninstall"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "api_base",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "PASTE_YOUR_JWT_TOKEN_HERE",
+      "type": "string"
+    }
+  ]
+}

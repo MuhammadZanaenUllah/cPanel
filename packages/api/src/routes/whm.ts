@@ -160,15 +160,164 @@ export async function whmRoutes(fastify: FastifyInstance) {
   });
 
   // 8. Server health stats (root only)
-  fastify.get('/stats', async (_request, _reply) => {
-    const accountCount = await db('accounts').count('id as c').first();
-    const domainCount = await db('domains').count('id as c').first();
-    const emailCount = await db('email_accounts').count('id as c').first();
+  fastify.get('/stats', async () => {
+    const [accountCount, domainCount, emailCount, planCount, suspendedCount, provisioningCount, ftpCount, dbCount] = await Promise.all([
+      db('accounts').count('id as c').first(),
+      db('domains').count('id as c').first(),
+      db('email_accounts').count('id as c').first(),
+      db('plans').where({ is_active: true }).count('id as c').first(),
+      db('accounts').where({ status: 'suspended' }).count('id as c').first(),
+      db('accounts').where({ status: 'provisioning' }).count('id as c').first(),
+      db('ftp_accounts').count('id as c').first(),
+      db('mysql_databases').count('id as c').first(),
+    ]);
     return {
       accounts: parseInt((accountCount?.c as string) || '0'),
       domains: parseInt((domainCount?.c as string) || '0'),
-      emails: parseInt((emailCount?.c as string) || '0')
+      emails: parseInt((emailCount?.c as string) || '0'),
+      plans: parseInt((planCount?.c as string) || '0'),
+      suspended: parseInt((suspendedCount?.c as string) || '0'),
+      provisioning: parseInt((provisioningCount?.c as string) || '0'),
+      ftp_accounts: parseInt((ftpCount?.c as string) || '0'),
+      databases: parseInt((dbCount?.c as string) || '0'),
     };
+  });
+
+  // 9. Account detail
+  fastify.get('/accounts/:id', async (request, reply) => {
+    const { id } = request.params as any;
+    const account = await db('accounts').where({ id }).first();
+    if (!account) return reply.code(404).send({ error: 'Account not found' });
+    const plan = await db('plans').where({ id: account.plan_id }).first();
+    const emailCount = await db('email_accounts').where({ account_id: id }).count('id as c').first();
+    const dbCount = await db('mysql_databases').where({ account_id: id }).count('id as c').first();
+    const ftpCount = await db('ftp_accounts').where({ account_id: id }).count('id as c').first();
+    const domainCount = await db('domains').where({ account_id: id }).count('id as c').first();
+    const { password_hash, ...safe } = account;
+    return {
+      ...safe,
+      plan,
+      usage: {
+        email_accounts: parseInt((emailCount?.c as string) || '0'),
+        databases: parseInt((dbCount?.c as string) || '0'),
+        ftp_accounts: parseInt((ftpCount?.c as string) || '0'),
+        addon_domains: parseInt((domainCount?.c as string) || '0'),
+      }
+    };
+  });
+
+  // 10. Change account plan
+  fastify.post('/accounts/:id/change-plan', async (request, reply) => {
+    const { id } = request.params as any;
+    const { planId } = request.body as any;
+    const account = await db('accounts').where({ id }).first();
+    if (!account) return reply.code(404).send({ error: 'Account not found' });
+    const plan = await db('plans').where({ id: planId }).first();
+    if (!plan) return reply.code(404).send({ error: 'Plan not found' });
+    await db('accounts').where({ id }).update({ plan_id: planId });
+    return { success: true, message: `Plan changed to ${plan.name}` };
+  });
+
+  // 11. Change account password
+  fastify.post('/accounts/:id/change-password', async (request, reply) => {
+    const { id } = request.params as any;
+    const { password } = request.body as any;
+    if (!password || password.length < 6) return reply.code(400).send({ error: 'Password must be at least 6 characters' });
+    const bcrypt = require('bcryptjs');
+    const hash = await bcrypt.hash(password, 10);
+    await db('accounts').where({ id }).update({ password_hash: hash });
+    return { success: true, message: 'Password updated' };
+  });
+
+  // 12. Edit plan
+  fastify.put('/plans/:id', async (request, reply) => {
+    const { id } = request.params as any;
+    const { name, disk_mb, bandwidth_mb, max_email_accounts, max_databases,
+      max_ftp_accounts, max_subdomains, max_addon_domains, max_cron_jobs, price_monthly } = request.body as any;
+    const plan = await db('plans').where({ id }).first();
+    if (!plan) return reply.code(404).send({ error: 'Plan not found' });
+    await db('plans').where({ id }).update({
+      name: name ?? plan.name,
+      disk_mb: disk_mb ?? plan.disk_mb,
+      bandwidth_mb: bandwidth_mb ?? plan.bandwidth_mb,
+      max_email_accounts: max_email_accounts ?? plan.max_email_accounts,
+      max_databases: max_databases ?? plan.max_databases,
+      max_ftp_accounts: max_ftp_accounts ?? plan.max_ftp_accounts,
+      max_subdomains: max_subdomains ?? plan.max_subdomains,
+      max_addon_domains: max_addon_domains ?? plan.max_addon_domains,
+      max_cron_jobs: max_cron_jobs ?? plan.max_cron_jobs,
+      price_monthly: price_monthly ?? plan.price_monthly,
+    });
+    return { success: true };
+  });
+
+  // 13. Toggle plan active/inactive
+  fastify.patch('/plans/:id/toggle', async (request, reply) => {
+    const { id } = request.params as any;
+    const plan = await db('plans').where({ id }).first();
+    if (!plan) return reply.code(404).send({ error: 'Plan not found' });
+    await db('plans').where({ id }).update({ is_active: !plan.is_active });
+    return { success: true, is_active: !plan.is_active };
+  });
+
+  // 14. Delete plan (only if no accounts use it)
+  fastify.delete('/plans/:id', async (request, reply) => {
+    const { id } = request.params as any;
+    const using = await db('accounts').where({ plan_id: id }).count('id as c').first();
+    if (parseInt((using?.c as string) || '0') > 0) {
+      return reply.code(400).send({ error: 'Cannot delete plan with active accounts' });
+    }
+    await db('plans').where({ id }).del();
+    return { success: true };
+  });
+
+  // 15. Service status (ping each service)
+  fastify.get('/service-status', async () => {
+    const ping = async (fn: () => Promise<void>): Promise<{ online: boolean; latency?: number }> => {
+      const start = process.hrtime.bigint();
+      try {
+        await fn();
+        const ms = Number(process.hrtime.bigint() - start) / 1e6;
+        return { online: true, latency: Math.round(ms) };
+      } catch {
+        return { online: false };
+      }
+    };
+    const [mysql, redis] = await Promise.all([
+      ping(async () => { await db.raw('SELECT 1'); }),
+      ping(async () => {
+        const Redis = require('ioredis');
+        const r = new Redis({ host: process.env.REDIS_HOST || '127.0.0.1', port: parseInt(process.env.REDIS_PORT || '6379'), connectTimeout: 2000, lazyConnect: true });
+        await r.connect(); await r.ping(); r.disconnect();
+      }),
+    ]);
+    return { mysql, redis, api: { online: true, latency: 0 } };
+  });
+
+  // 16. Recent activity (last 20 account actions from accounts table)
+  fastify.get('/activity', async () => {
+    const recent = await db('accounts')
+      .orderBy('created_at', 'desc')
+      .limit(10)
+      .select('id', 'username', 'primary_domain', 'status', 'role', 'created_at', 'suspended_at');
+    return recent.map((a: any) => ({
+      id: a.id,
+      username: a.username,
+      domain: a.primary_domain,
+      status: a.status,
+      role: a.role,
+      event: a.status === 'suspended' ? 'Account Suspended' : a.status === 'provisioning' ? 'Account Created' : 'Account Active',
+      time: a.suspended_at || a.created_at,
+    }));
+  });
+
+  // 17. Get all plans (including inactive for admin view)
+  fastify.get('/plans/all', async () => {
+    const plans = await db('plans').orderBy('price_monthly', 'asc');
+    const counts = await db('accounts').groupBy('plan_id').select('plan_id').count('id as c');
+    const countMap: Record<string, number> = {};
+    counts.forEach((r: any) => { countMap[r.plan_id] = parseInt(r.c); });
+    return plans.map((p: any) => ({ ...p, account_count: countMap[p.id] || 0 }));
   });
 
   // ---- WHMCS-Compatible WHM API1 Endpoints ----
